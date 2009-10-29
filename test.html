@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Blade: Simple Test</title>
+    <script type="text/javascript" src="run.js"></script>
+    <script type="text/javascript">
+        run(
+            ["_", "_.node", "_.style", "_.attr", "_.$"],
+            function(_, node, style, attr, bling) {
+                window._ = _;
+                window.node = node;
+                window.style = style;
+                window.attr = attr;
+                window.bling = bling;
+                window.$ = bling;
+            }
+        );
+        run.ready(function(){
+            console.log("loaded");
+        });
+    </script>
+</head>
+<body>
+    <h1 id="one">Blade Simple Test</h1>
+    <p>Use console to play with API. Not very useful yet.</p>
+</body>
+</html>
