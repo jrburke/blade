@@ -9,6 +9,7 @@ Blade is an experiment in a new JavaScript toolkit. It steals a lot from the Doj
 * Modules should define a function
 * Mobile is more important than Internet Explorer
 * HTML5 support is standard
+* Use advanced features where possible
 * JQuery API matching
 * Focus on the code, not the tooling
 * Provide BSD licensed, CLA-safe code
@@ -98,6 +99,10 @@ There will be a standard blade js file that is built with IE support bundled, bu
 HTML5 support is standard
 -------------------------
 OK, this one is just buzzword support. Right now I think it means just using data- prefixes for DOM attributes that are custom to the library.
+
+Use advanced features where possible
+------------------------------------
+Similar HTML5 support -- use things that might not be in the HTML5 spec but still in wide enough use for mobile, like CSS animations.
 
 JQuery API matching
 -------------------
