@@ -95,7 +95,7 @@
         _.isArray = function(/*anything*/ it){
           //  summary:
           //    Return true if it is an Array
-          return it && (it instanceof Array || typeof it == "array"); // Boolean
+          return opts.call(it) === "[object Array]"; // Boolean
         }
   
 	var opts = Object.prototype.toString;
