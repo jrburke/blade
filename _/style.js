@@ -180,7 +180,7 @@ run(
 	};
 
     //Add node to the _() chaining.
-    _.enhance("style", style, true);
+    _.sharpen("style", style, true);
 
     return style;
   }

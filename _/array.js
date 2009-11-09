@@ -253,13 +253,13 @@ run(
 		}
 	};
 
-      _.enhance("indexOf", array.indexOf, true);
-      _.enhance("lastIndexOf", array.lastIndexOf, true);
-      _.enhance("forEach", array.forEach, true);
-      _.enhance("every", array.every, true);
-      _.enhance("some", array.some, true);
-      _.enhance("map", array.map, true);
-      _.enhance("filter", array.filter, true);
+      _.sharpen("indexOf", array.indexOf, true);
+      _.sharpen("lastIndexOf", array.lastIndexOf, true);
+      _.sharpen("forEach", array.forEach, true);
+      _.sharpen("every", array.every, true);
+      _.sharpen("some", array.some, true);
+      _.sharpen("map", array.map, true);
+      _.sharpen("filter", array.filter, true);
 
       return array;    
   }

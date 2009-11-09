@@ -250,10 +250,10 @@ run(
     }
 
     //Add node to the _() chaining.
-    _.enhance("node", node, true);
-    _.enhance("empty", node.empty, true);
-    _.enhance("destroy", node.empty, true);
-    _.enhance("place", node.place, true);
+    _.sharpen("node", node, true);
+    _.sharpen("empty", node.empty, true);
+    _.sharpen("destroy", node.empty, true);
+    _.sharpen("place", node.place, true);
 
     return node;
   }

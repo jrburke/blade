@@ -272,7 +272,7 @@ run(
     }
 
     //Add node to the _() chaining.
-    _.enhance("attr", attr, function(ret) {
+    _.sharpen("attr", attr, function(ret) {
       return ret === undefined || ret.nodeType;
     });
 

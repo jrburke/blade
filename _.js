@@ -69,7 +69,7 @@
           _.isIe = isIe;
         }
 
-        _.enhance = function(name, func, allowChaining) {
+        _.sharpen = function(name, func, allowChaining) {
           //The function will receive the this._subject as the first
           //argument to the call.
           _.prototype[name] = function() {
@@ -131,14 +131,6 @@
                   !(it.tagName && it.tagName.toLowerCase() == 'form') &&
                   (_.isArray(it) || isFinite(it.length));
         }
-  
-        _.isAlien = function(/*anything*/ it){
-          // summary:
-          //    Returns true if it is a built-in function or some other kind of
-          //    oddball that *should* report as a function but doesn't
-          return it && !_.isFunction(it) && /\{\s*\[native code\]\s*\}/.test(String(it)); // Boolean
-        }
-  
   
         //Define mixin variables, to get around IE not mixing in some props.
         var extraNames, extraLen, empty = {};

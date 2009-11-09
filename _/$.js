@@ -1564,7 +1564,7 @@ run(
 	}
 
   })(acme);
-    _.enhance("$", acme.query, false);
+    _.sharpen("$", acme.query, false);
 
     return acme.query;
   }

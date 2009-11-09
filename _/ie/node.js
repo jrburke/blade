@@ -14,6 +14,6 @@ run.modify(
               node.destroy(c);
       }
     }
-    _.enhance("empty", node.empty, true);
+    _.sharpen("empty", node.empty, true);
   }
 );

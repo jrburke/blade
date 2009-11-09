@@ -1,10 +1,10 @@
 #Blade API
 
-This is a sketch for the Blade API. Types will be given in /* */ comments and optional arguments are followed by a question mark.
+This is a sketch for the Blade API. Types will be specified before the argument in type: syntax and optional arguments are followed by a question mark after the type.
 
 ##The blade method
 
-###_(/*Object*/ subject, /*Object?*/ parent)
+###_(Object:subject, Object?:parent)
 
 The blade function, _() is the main entry point into the chainable operations. The subject object can be of any type, but only
 certain chainable methods will work with certain types. Most chainable that want to use a DOM node or a NodeList of DOM nodes
@@ -39,7 +39,7 @@ Helpers for the JavaScript language:
 ### _.global / none
 This property points to the global object for the host environment. In a web browser, it is the window object.
 
-### _.enhance(/*String*/ name, /*Function*/ func, /*Boolean?||Function?*/ allowChaining) / none
+### _.sharpen(String:name, Function:func, Boolean?||Function?:allowChaining) / none
 The function to call to add a new bladed method. Give the name of the new function, the func function definition, and
 specify if chaining is allowed. If chaining is allowed, then a bladed subject will be returned from the function call
 instead of the raw function's return value. If allowChaining is a function, the raw return value will be given to the
@@ -47,7 +47,7 @@ allowChaining function, and if true is returned from the allowChaining function,
 and the parent of the blade will be set to the previously bladed value in the chain.
 
     //Set up the color method above:
-    _.enhance(
+    _.sharpen(
         "color",
         function(node, value) {
           if (value) {
