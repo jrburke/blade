@@ -253,14 +253,11 @@ run(
 		}
 	};
 
-      _.sharpen("indexOf", array.indexOf, true);
-      _.sharpen("lastIndexOf", array.lastIndexOf, true);
-      _.sharpen("forEach", array.forEach, true);
-      _.sharpen("every", array.every, true);
-      _.sharpen("some", array.some, true);
-      _.sharpen("map", array.map, true);
-      _.sharpen("filter", array.filter, true);
+	// let's reuse what we already defined for compactness: it is a one-time deal
+	array.forEach(["indexOf", "lastIndexOf", "forEach", "every", "some", "map", "filter"], function (name) {
+		_.sharpen(name, array[name], true);
+	});
 
-      return array;    
+	return array;    
   }
 );
