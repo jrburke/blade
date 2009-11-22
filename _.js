@@ -6,7 +6,7 @@
 (function() {
   //Determine if we are in the browser, and set up knowledge of IE. Just
   //want to know about IE, but in general avoid user agent detection.
-  var isBrowser = typeof document != "undefined" && typeof navigator != "undefined";
+  var isBrowser = navigator && window && document;
   if (isBrowser) {
     isIe = (document.all &&
              navigator.userAgent.indexOf("Opera") == -1
@@ -54,10 +54,7 @@
             return this._subject;
           },
           end: function() {
-            if (this._parent) {
-              return this._parent;
-            }
-            return this;
+			return this._parent || this;
           }
         };
   
@@ -78,7 +75,7 @@
             var ret = func.apply(this, args);
             if (allowChaining) {
               var draw = allowChaining === true || allowChaining(ret);
-              return draw ? (ret && ret != this ? _(ret, this) : this) : ret;
+              return draw ? (ret && ret !== this ? _(ret, this) : this) : ret;
             } else {
               return ret;
             }
@@ -86,10 +83,13 @@
         }
   
         // Crockford (ish) functions
+
+		var opts = Object.prototype.toString;
+
         _.isString = function(/*anything*/ it){
           //  summary:
           //    Return true if it is a String
-          return (typeof it == "string" || it instanceof String); // Boolean
+          return opts.call(it) === "[object String]"; // Boolean
         }
   
         _.isArray = function(/*anything*/ it){
@@ -98,12 +98,11 @@
           return opts.call(it) === "[object Array]"; // Boolean
         }
   
-	var opts = Object.prototype.toString;
-	_.isFunction = function(/*anything*/ it){
-		// summary:
-		//		Return true if it is a Function
-		return opts.call(it) === "[object Function]";
-	};
+		_.isFunction = function(/*anything*/ it){
+			// summary:
+			//		Return true if it is a Function
+			return opts.call(it) === "[object Function]";
+		};
 
         _.isObject = function(/*anything*/ it){
           // summary:
@@ -124,7 +123,7 @@
           //    _.isArray().
           //  returns:
           //    If it walks like a duck and quacks like a duck, return `true`
-          return it && it !== undefined && // Boolean
+          return it && // Boolean
                   // keep out built-in constructors (Number, String, ...) which have length
                   // properties
                   !_.isString(it) && !_.isFunction(it) &&
@@ -150,7 +149,7 @@
         _.mixin = function(target, source) {
           var name, s, i;
           for (name in source) {
-            // the "tobj" condition avoid copying properties in "source"
+            // the "empty" condition avoid copying properties in "source"
             // inherited from Object.prototype.  For example, if target has a custom
             // toString() method, don't overwrite it with the toString() method
             // that source inherited from Object.prototype
@@ -172,16 +171,16 @@
           return target; // Object
         }
   
-    _.extend = function(/*Object*/ constructor, /*Object...*/ props){
-      // summary:
-      //    Adds all properties and methods of props to constructor's
-      //    prototype, making them available to all instances created with
-      //    constructor.
-      for(var i=1, l=arguments.length; i<l; i++){
-        _.mixin(constructor.prototype, arguments[i]);
-      }
-      return constructor; // Object
-    }
+		_.extend = function(/*Object*/ constructor, /*Object...*/ props){
+		  // summary:
+		  //    Adds all properties and methods of props to constructor's
+		  //    prototype, making them available to all instances created with
+		  //    constructor.
+		  for(var i=1, l=arguments.length; i<l; i++){
+			_.mixin(constructor.prototype, arguments[i]);
+		  }
+		  return constructor; // Object
+		}
   
         _.delegate = (function(){
           // boodman/crockford delegation w/ cornford optimization
@@ -206,7 +205,7 @@
             // locate our method
             var f = named ? (scope||_.global)[method] : method;
             // invoke with collected args
-            return f && f.apply(scope || this, pre.concat(args)); // mixed
+            return f ? f.apply(scope || this, pre.concat(args)) : undefined; // mixed
           } // Function
         }
       
@@ -244,6 +243,7 @@
           //    execute an anonymous function in scope of foo
           
           if(arguments.length > 2){
+			//TODO: what is "d" below? is it the same as "_"?
             return _._hitchArgs.apply(d, arguments); // Function
           }
           if(!method){
@@ -277,14 +277,16 @@
         }
         =====*/
   
-        var efficient = function(obj, offset, startWith){
-                return (startWith||[]).concat(Array.prototype.slice.call(obj, offset||0));
+        var aps = Array.prototype.slice,
+			efficient = function(obj, offset, startWith){
+				var t = aps.call(obj, offset||0);
+                return startWith ? startWith.concat(t) : t;
         };
   
         //>>excludeStart("webkitMobile", kwArgs.webkitMobile);
         var slow = function(obj, offset, startWith){
                 var arr = startWith||[];
-                for(var x = offset || 0; x < obj.length; x++){
+                for(var x = offset || 0, l = obj.length; x < l; x++){
                         arr.push(obj[x]);
                 }
                 return arr;
@@ -307,6 +309,7 @@
                 //    Calling _.partial is the functional equivalent of calling:
                 //    |  _.hitch(null, funcName, ...);
                 var arr = [ null ];
+				//TODO: what is "d" below? is it the same as "_"?
                 return _.hitch.apply(d, arr.concat(_.toArray(arguments))); // Function
         }
   
