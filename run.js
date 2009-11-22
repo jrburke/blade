@@ -11,7 +11,7 @@ setTimeout: false, setInterval: false, clearInterval: false */
   //Change this version number for each release.
   var version = [0, 0, 3, ""],
       run = typeof run === "undefined" ? null : run,
-      oldState = null,
+      oldState = null, empty = {},
       i, defContextName = "_runDefault", contextLoads = [],
       //regexp for matching nls (i18n) module names.
       nlsRegExp = /(^.*(^|\.)nls(\.|$))([^\.]*)\.?([^\.]*)/,
@@ -63,7 +63,7 @@ setTimeout: false, setInterval: false, clearInterval: false */
    * on other modules.
    */
   run = function (name, deps, callback, contextName, altContextName) {
-    var config = null, context, loaded, empty, canSetContext, prop, dep, baseUrl,
+    var config = null, context, loaded, canSetContext, prop, dep, baseUrl,
         newLength, match, master, nlsw, bundle, needLoad, i, j, parts, toLoad,
         loc, val, newContext, contextRun, isFunction = false, mods;
 
@@ -126,7 +126,6 @@ setTimeout: false, setInterval: false, clearInterval: false */
       //If nothing is waiting on being loaded in the current context,
       //then switch run._currContextName to current contextName.
       loaded = (run._contexts[run._currContextName] && run._contexts[run._currContextName].loaded);
-      empty = {};
       canSetContext = true;
       if (loaded) {
         for (prop in loaded) {
@@ -195,7 +194,6 @@ setTimeout: false, setInterval: false, clearInterval: false */
       }
 
       if (config.paths) {
-        empty = {};
         for (prop in config.paths) {
           if (!(prop in empty)) {
             context.paths[prop] = config.paths[prop];
@@ -376,7 +374,7 @@ setTimeout: false, setInterval: false, clearInterval: false */
    * );
    */
   run.modify = function (target, name, deps, callback, contextName) {
-    var empty = {}, prop, modifier, list,
+    var prop, modifier, list,
         cName = (typeof target === "string" ? contextName : name) || run._currContextName,
         context = run._contexts[cName],
         mods = context.modifiers;
@@ -517,7 +515,6 @@ setTimeout: false, setInterval: false, clearInterval: false */
         //It is possible to disable the wait interval by using waitSeconds of 0.
         expired = waitInterval && (context.startTime + waitInterval) < (new Date()).getTime(),
         loaded = context.loaded,
-        empty = {},
         noLoads = "",
         hasLoadedProp = false, stillLoading = false,
         prop, waiting, nlsWaiting, master, msWaiting, bundle, defLoc, parts,
@@ -567,7 +564,6 @@ setTimeout: false, setInterval: false, clearInterval: false */
     //First, properly mix in any nls bundles waiting to happen.
     //Use an empty object to detect other bad JS code that modifies
     //Object.prototype.
-    empty = {};
     for (prop in nlsWaiting) {
       if (!(prop in empty)) {
         //Each property is a master bundle name.
@@ -679,7 +675,6 @@ setTimeout: false, setInterval: false, clearInterval: false */
       //load. After defining the modules above, new run calls
       //could have been made.   
       loaded = context.loaded;
-      empty = {};
       allDone = true;
       for (prop in loaded) {
         if (!(prop in empty)) {
@@ -830,7 +825,7 @@ setTimeout: false, setInterval: false, clearInterval: false */
   run.mixin = function (target, source) {
     //Use an empty object to avoid other bad JS code that modifies
     //Object.prototype.
-    var empty = {}, prop;
+    var prop;
     for (prop in source) {
       if (!(prop in target)) {
         target[prop] = source[prop];
