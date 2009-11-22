@@ -17,11 +17,11 @@ setTimeout: false, setInterval: false, clearInterval: false */
       nlsRegExp = /(^.*(^|\.)nls(\.|$))([^\.]*)\.?([^\.]*)/,
       scripts, script, rePkg, src, m,
       readyRegExp = /complete|loaded/,
-      isBrowser = (typeof window !== "undefined"),
+      isBrowser = navigator && window && document,
       isPageLoaded = !isBrowser,
       pageLoadRegExp = /loaded|complete/,
       head = (document.getElementsByTagName("head")[0] || document.getElementsByTagName("html")[0]),
-      ostring = Object.prototype.toString;
+      ostring = Object.prototype.toString, aps = Array.prototype.slice;
 
   //Check for an existing version of run.
   //Only overwrite if there is a version of run and it is less
@@ -50,7 +50,7 @@ setTimeout: false, setInterval: false, clearInterval: false */
       //A version of a run function that uses the current context.
       //If last arg is a string, then it is a context.
       //If last arg is not a string, then add context to it.
-      var args = [].concat(Array.prototype.slice.call(arguments, 0));
+      var args = aps.call(arguments, 0);
       if (typeof arguments[arguments.length - 1] !== "string") {
         args.push(contextName);
       }
@@ -117,7 +117,7 @@ setTimeout: false, setInterval: false, clearInterval: false */
         deps = [];
       }
 
-      contextName = contextName || config.context || run._currContextName;
+      contextName = contextName || config.context;
     }
 
     contextName = contextName || run._currContextName;
@@ -152,7 +152,7 @@ setTimeout: false, setInterval: false, clearInterval: false */
         locale: typeof navigator === "undefined" ? "root" :
                   (navigator.language || navigator.userLanguage || "root").toLowerCase(),
         paths: {},
-        waitSeconds: 7,
+        waitSeconds: 7, //TODO: hard-coded?
         specified: {
           "run": true
         },
@@ -263,7 +263,7 @@ setTimeout: false, setInterval: false, clearInterval: false */
 
         //Track what locale bundle need to be generated once all the modules load.
         nlsw = (context.nlsWaiting[master] || (context.nlsWaiting[master] = {}));
-        nlsw[match[4]] = 1;
+        nlsw[match[4]] = 1; //TODO: should be true? or should we use 1 as true more consistently?
 
         bundle = context.nls[master];
         if (!bundle) {
@@ -312,16 +312,14 @@ setTimeout: false, setInterval: false, clearInterval: false */
 
         nlsw = context.nlsWaiting[name] || (context.nlsWaiting[name] = {});
         for (j = parts.length; j > -1; j--) {
-          loc = j === 0 ? "root" : parts.slice(0, j).join("-");
+          loc = j ? parts.slice(0, j).join("-") : "root";
           val = dep[loc];
           if (val) {
             //Store which bundle to use for the default bundle definition.
-            if (!nlsw.__match) {
-              nlsw.__match = loc;
-            }
+            nlsw.__match = nlsw.__match || loc;
 
             //Track that the locale needs to be resolved with its parts.
-            nlsw[loc] = 1;
+            nlsw[loc] = 1; //TODO: should be true? or we should use 1 as true consistently.
 
             //If locale value is a string, it means it is a resource that
             //needs to be loaded. Track it to load if it has not already
@@ -482,7 +480,14 @@ setTimeout: false, setInterval: false, clearInterval: false */
       syms = moduleName.split(".");
       for (i = syms.length; i > 0; i--) {
         parentModule = syms.slice(0, i).join(".");
-        if (i !== 1 || !!(paths[parentModule])) {
+        /*
+        //TODO: is it valid simplification (below)?
+        if (paths[parentModule]) {
+          syms.splice(0, i, paths[parentModule]);
+          break;
+        }
+        */
+        if (i !== 1 || paths[parentModule]) {
           parentModulePath = paths[parentModule] || parentModule;
           if (parentModulePath !== parentModule) {
             syms.splice(0, i, parentModulePath);
@@ -513,7 +518,7 @@ setTimeout: false, setInterval: false, clearInterval: false */
     var context = run._contexts[contextName || run._currContextName],
         waitInterval = context.waitSeconds * 1000,
         //It is possible to disable the wait interval by using waitSeconds of 0.
-        expired = waitInterval && (context.startTime + waitInterval) < (new Date()).getTime(),
+        expired = waitInterval && (context.startTime + waitInterval) < new Date().getTime(),
         loaded = context.loaded,
         noLoads = "",
         hasLoadedProp = false, stillLoading = false,
@@ -542,10 +547,12 @@ setTimeout: false, setInterval: false, clearInterval: false */
       //If the loaded object had no items, then the rest of
       //the work below does not need to be done.
       return;
-    } else if (expired) {
+    }
+    if (expired) {
       //If wait time expired, throw error of unloaded modules.
       throw new Error("run.js load timeout for modules: " + noLoads);
-    } else if (stillLoading) {
+    }
+    if (stillLoading) {
       //Something is still waiting to load. Wait for it.
       setTimeout(function () {
         run.checkLoaded(contextName);
