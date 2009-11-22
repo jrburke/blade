@@ -69,17 +69,27 @@
         _.sharpen = function(name, func, allowChaining) {
           //The function will receive the this._subject as the first
           //argument to the call.
-          _.prototype[name] = function() {
-            args = _.toArray(arguments);
-            args.unshift(this._subject);
-            var ret = func.apply(this, args);
-            if (allowChaining) {
-              var draw = allowChaining === true || allowChaining(ret);
-              return draw ? (ret && ret !== this ? _(ret, this) : this) : ret;
-            } else {
-              return ret;
-            }
-          }
+		  var f;
+		  // let's branch on assignment to gain some speed
+		  if (allowChaining === true) {
+			// allways chain
+			f = function() {
+			  var ret = func.apply(this, _.toArray(arguments, 0, [this._subject]));
+			  return ret && ret !== this ? _(ret, this) : this;
+			}
+		  }else if (allowChaining) {
+			// chain on function
+			f = function() {
+			  var ret = func.apply(this, _.toArray(arguments, 0, [this._subject]));
+			  return allowChaining(ret) ? (ret && ret !== this ? _(ret, this) : this) : ret;
+			}
+		  }else{
+			// don't chain
+			f = function() {
+			  return func.apply(this, _.toArray(arguments, 0, [this._subject]));
+			}
+		  }
+          _.prototype[name] = f;
         }
   
         // Crockford (ish) functions
