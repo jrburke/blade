@@ -9,8 +9,9 @@ run(
   ["run", "_", "_.array", "_.$", "_.node", "_.style", "_.attr"],
   function(run, _, array, $, node, style, attr) {
 
+	//TODO: through out this file "d" and "dojo" is used --- should be cleaned up eventually.
 
-	var ap = Array.prototype, aps = ap.slice, apc = ap.concat;
+	var ap = Array.prototype, aps = ap.slice, apc = ap.concat, opts = Object.prototype.toString;
 
 	var tnl = function(/*Array*/ a, /*dojo.NodeList?*/ parent, /*Function?*/ NodeListCtor){
 		// summary:
@@ -110,7 +111,7 @@ run(
 	var magicGuard = function(a){
 		//	summary:
 		//		the guard function for dojo.attr() and dojo.style()
-		return a.length == 1 && (typeof a[0] == "string"); // inline'd type check
+		return a.length == 1 && opts.call(a[0]) == "[object String]"; // inline'd type check
 	};
 
 	var orphan = function(node){
@@ -270,7 +271,7 @@ run(
 			//multiple refNodes. Also, need a real array, not a NodeList from the
 			//DOM since the node movements could change those NodeLists.
 
-			var parse = content.parse === true ? true : false;
+			var parse = content.parse === true; //TODO: do we need "=== true" here?
 
 			//Do we have an object that needs to be run through a template?
 			if(typeof content.template == "string"){
@@ -278,7 +279,7 @@ run(
 				content = templateFunc ? templateFunc(content.template, content) : content;
 			}
 
-			var type = (typeof content);
+			var type = typeof content;
 			if(type == "string" || type == "number"){
 				content = node.dom(content, (refNode && refNode.ownerDocument));
 				if(content.nodeType == 11){
@@ -327,7 +328,7 @@ run(
 			//DOM NodeList and the DOM operations take it out of the live collection.
 			var length = ary.length;
 			for(var i = length - 1; i >= 0; i--){
-				var n = (useClone ? this._cloneNode(ary[i]) : ary[i]);
+				var n = useClone ? this._cloneNode(ary[i]) : ary[i];
 
 				//If need widget parsing, use a temp node, instead of waiting after inserting into
 				//real DOM because we need to start widget parsing at one node up from current node,
