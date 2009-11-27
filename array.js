@@ -4,14 +4,14 @@
   see: http://github.com/jrburke/blade for details
 */
 run(
-  "_.array",
-  ["run", "_"],
-  function(run, _) {
+  "array",
+  ["run"],
+  function(run) {
 
 	var _getParts = function(arr, obj, cb){
 		return [ 
 			(typeof arr == "string") ? arr.split("") : arr, 
-			obj || _.global,
+			obj || run.global,
 			// FIXME: cache the anonymous functions we create here?
 			(typeof cb == "string") ? new Function("item", "index", "array", cb) : cb
 		];
@@ -28,8 +28,14 @@ run(
 		return every; // Boolean
 	};
 
-	var array = {
-		indexOf: function(	/*Array*/		array, 
+	var array = function (obj, offset, startWith) {
+		var t = aps.call(obj, offset||0);
+		return startWith ? startWith.concat(t) : t;
+	};
+
+	
+
+		array.indexOf = function(	/*Array*/		array, 
 							/*Object*/		value,
 							/*Integer?*/	fromIndex,
 							/*Boolean?*/	findLast){
@@ -55,9 +61,9 @@ run(
 				}
 			}
 			return -1;	// Number
-		},
+		};
 
-		lastIndexOf: function(/*Array*/ary, /*Object*/value, /*Integer?*/fromIndex){
+		array.lastIndexOf = function(/*Array*/ary, /*Object*/value, /*Integer?*/fromIndex){
 			// summary:
 			//		locates the last index of the provided value in the passed
 			//		array. If the value is not found, -1 is returned.
@@ -68,9 +74,9 @@ run(
 			//		For details on this method, see:
 			// 			https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Objects/Array/lastIndexOf
 			return array.indexOf(ary, value, fromIndex, true); // Number
-		},
+		};
 
-		forEach: function(/*Array|String*/arr, /*Function|String*/callback, /*Object?*/thisObject){
+		array.forEach = function(/*Array|String*/arr, /*Function|String*/callback, /*Object?*/thisObject){
 			//	summary:
 			//		for every item in arr, callback is invoked. Return values are ignored.
 			//		If you want to break out of the loop, consider using dojo.every() or dojo.some().
@@ -135,9 +141,9 @@ run(
 			for(var i=0,l=arr.length; i<l; ++i){ 
 				_p[2].call(_p[1], arr[i], i, arr);
 			}
-		},
+		};
 
-		every: function(/*Array|String*/arr, /*Function|String*/callback, /*Object?*/thisObject){
+		array.every = function(/*Array|String*/arr, /*Function|String*/callback, /*Object?*/thisObject){
 			// summary:
 			//		Determines whether or not every item in arr satisfies the
 			//		condition implemented by callback.
@@ -163,7 +169,7 @@ run(
 			return everyOrSome(true, arr, callback, thisObject); // Boolean
 		},
 
-		some: function(/*Array|String*/arr, /*Function|String*/callback, /*Object?*/thisObject){
+		array.some = function(/*Array|String*/arr, /*Function|String*/callback, /*Object?*/thisObject){
 			// summary:
 			//		Determines whether or not any item in arr satisfies the
 			//		condition implemented by callback.
@@ -189,7 +195,7 @@ run(
 			return everyOrSome(false, arr, callback, thisObject); // Boolean
 		},
 
-		map: function(/*Array|String*/arr, /*Function|String*/callback, /*Function?*/thisObject){
+		array.map = function(/*Array|String*/arr, /*Function|String*/callback, /*Function?*/thisObject){
 			// summary:
 			//		applies callback to each element of arr and returns
 			//		an Array with the results
@@ -217,9 +223,9 @@ run(
 				outArr.push(_p[2].call(_p[1], arr[i], i, arr));
 			}
 			return outArr; // Array
-		},
+		};
 
-		filter: function(/*Array*/arr, /*Function|String*/callback, /*Object?*/thisObject){
+		array.filter = function(/*Array*/arr, /*Function|String*/callback, /*Object?*/thisObject){
 			// summary:
 			//		Returns a new Array with those items from arr that match the
 			//		condition implemented by callback.
@@ -250,14 +256,21 @@ run(
 				}
 			}
 			return outArr; // Array
-		}
-	};
+		};
 
-	// let's reuse what we already defined for compactness: it is a one-time deal
-	array.forEach(["indexOf", "lastIndexOf", "forEach", "every", "some", "map", "filter"], function (name) {
-		_.sharpen(name, array[name], true);
-	});
+		//Register optional methods on blade if it happens to be loaded.
+		run.modify(
+		  "blade",
+		  "array",
+		  function (_) {
+			// let's reuse what we already defined for compactness: it is a one-time deal
+			array.forEach(["indexOf", "lastIndexOf", "forEach", "every", "some", "map", "filter"], function (name) {
+				_.sharpen(name, array[name], true);
+			});
+		  }
+		);
 
+	
 	return array;    
   }
 );
