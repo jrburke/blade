@@ -24,4 +24,4 @@ If you wish to get the unbladed subject out of a blade, then just call _() with 
 
 ##API components
 
-* [blade](blade.md)
+* [blade](api/blade.md)
