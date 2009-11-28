@@ -4,10 +4,10 @@
   see: http://github.com/jrburke/blade for details
 */
 run(
-  "_.NodeList",
+  "NodeList",
   Function,
-  ["run", "_", "_.array", "_.$", "_.node", "_.style", "_.attr"],
-  function(run, _, array, $, node, style, attr) {
+  ["run", "lang", "array", "query", "node", "style", "attr"],
+  function(run, lang, array, $, node, style, attr) {
 
 	//TODO: through out this file "d" and "dojo" is used --- should be cleaned up eventually.
 
@@ -30,16 +30,16 @@ run(
 			// make sure it's a real array before we pass it on to be wrapped
 			a = aps.call(a, 0);
 		}
-		var ctor = NodeListCtor || this._NodeListCtor || _._NodeListCtor;
+		var ctor = NodeListCtor || this._NodeListCtor || NodeList._NodeListCtor;
 		a.constructor = ctor;
-		_.mixin(a, ctor.prototype);
+		lang.mixin(a, ctor.prototype);
 		a._NodeListCtor = ctor;
 		return parent ? a._stash(parent) : a;
 	};
 
 	var loopBody = function(f, a, o){
 		a = [0].concat(aps.call(a, 0));
-		o = o || _.global;
+		o = o || run.global;
 		return function(node){
 			a[0] = node;
 			return f.apply(o, a);
@@ -100,7 +100,7 @@ run(
 		//		an optional context for f and g
 		return function(){
 			var a = arguments, body = loopBody(f, a, o);
-			if(g.call(o || _.global, a)){
+			if(g.call(o || run.global, a)){
 				return this.map(body);	// self
 			}
 			this.forEach(body);
@@ -207,7 +207,7 @@ run(
 	};
 
 	//Allow things that new up a NodeList to use a delegated or alternate NodeList implementation.
-	_._NodeListCtor = NodeList;
+	NodeList._NodeListCtor = NodeList;
 
 	var nl = NodeList, nlp = nl.prototype;
 
@@ -251,7 +251,7 @@ run(
 		nlp[name] = adaptAsForEach(d[name]);
 	});
 */
-	_.extend(NodeList, {
+	lang.extend(NodeList, {
 		_normalize: function(/*String||Element||Object||NodeList*/content, /*DOMNode?*/refNode){
 			// summary:
 			// 		normalizes data to an array of items to insert.
@@ -284,16 +284,16 @@ run(
 				content = node.dom(content, (refNode && refNode.ownerDocument));
 				if(content.nodeType == 11){
 					//DocumentFragment. It cannot handle cloneNode calls, so pull out the children.
-					content = _.toArray(content.childNodes);
+					content = array(content.childNodes);
 				}else{
 					content = [content];
 				}
-			}else if(!_.isArrayLike(content)){
+			}else if(!lang.isArrayLike(content)){
 				content = [content];
-			}else if(!_.isArray(content)){
+			}else if(!lang.isArray(content)){
 				//To get to this point, content is array-like, but
 				//not an array, which likely means a DOM NodeList. Convert it now.
-				content = _.toArray(content);
+				content = array(content);
 			}
 
 			//Pass around the parse info
@@ -551,9 +551,9 @@ run(
 			// native NodeList and dojo.NodeList in this property to recognize
 			// the node list.
 
-			var t = _.isArray(this) ? this : aps.call(this, 0),
+			var t = lang.isArray(this) ? this : aps.call(this, 0),
 				m = array.map(arguments, function(a){
-					return a && !_.isArray(a) &&
+					return a && !lang.isArray(a) &&
 						(a.constructor === NodeList || a.constructor == this._NodeListCtor) ?
 							aps.call(a, 0) : a;
 				});
@@ -927,7 +927,7 @@ run(
 			//	example:
 			//		Grabs all buttons in the page and converts them to diji.form.Buttons.
 			//	|	var buttons = dojo.query("button").instantiate("dijit.form.Button", {showLabel: true});
-			var c = _.isFunction(declaredClass) ? declaredClass : _.getObject(declaredClass);
+			var c = lang.isFunction(declaredClass) ? declaredClass : xxx.getObject(declaredClass);
 			properties = properties || {};
 			return this.forEach(function(node){
 				new c(properties, node);

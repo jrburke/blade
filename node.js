@@ -4,10 +4,10 @@
   see: http://github.com/jrburke/blade for details
 */
 run(
-  "_.node",
+  "node",
   Function,
-  ["_", "run"],
-  function(_, run) {
+  ["run"],
+  function(run) {
     /**
      * node will get or create a node.
      *
@@ -32,9 +32,9 @@ run(
         if (ch == "<") {
           node = dom(id);
         } else if (ch == "#") {
-           node = _.doc.getElementById(id.substring(1, id.length));
+           node = run.doc.getElementById(id.substring(1, id.length));
         } else {
-          node = _.doc.createElement(id);
+          node = run.doc.createElement(id);
         }
       }
 
@@ -42,7 +42,7 @@ run(
       //dependency on attr. Ignore it if it is not loaded.
       if (props) {
         if (!attr) {
-          attr = run.def["_.attr"];
+          attr = run.def["attr"];
         }
         if (attr) {
           attr(node, props);
@@ -102,7 +102,7 @@ run(
       //  summary:
       //     converts HTML string into DOM nodes.
   
-      doc = doc || _.doc;
+      doc = doc || run.doc;
       var masterId = doc[masterName];
       if(!masterId){
         doc[masterName] = masterId = ++masterNum + "";
@@ -250,10 +250,17 @@ run(
     }
 
     //Add node to the _() chaining.
-    _.sharpen("node", node, true);
-    _.sharpen("empty", node.empty, true);
-    _.sharpen("destroy", node.empty, true);
-    _.sharpen("place", node.place, true);
+    run.modify(
+      "blade",
+      "node",
+      ["blade"],
+      function(_) {
+	_.sharpen("node", node, true);
+	_.sharpen("empty", node.empty, true);
+	_.sharpen("destroy", node.empty, true);
+	_.sharpen("place", node.place, true);
+      }
+    );
 
     return node;
   }

@@ -4,10 +4,10 @@
   see: http://github.com/jrburke/blade for details
 */
 run(
-  "_.attr",
+  "attr",
   Function,
-  ["_", "_.node", "_.style", "run" /*, "event"*/],
-  function(_, n, style, run, event) {
+  ["run", "node", "lang", "style"],
+  function(run, n, lang, style) {
 
   
     // attr() should conform to http://www.w3.org/TR/DOM-Level-2-Core/
@@ -35,7 +35,6 @@ run(
       _forcePropNames = {
         innerHTML: 1,
         className: 1,
-        htmlFor:   _.isIe,
         value:     1
       };
 
@@ -90,18 +89,18 @@ run(
       //
       //  example:
       //  |  // get the current value of the "foo" attribute on a node
-      //  |  _.attr(node("#nodeId"), "foo");
+      //  |  attr(node("#nodeId"), "foo");
       //  |  // or we can just pass the id:
-      //  |  _.attr("#nodeId", "foo");
+      //  |  attr("#nodeId", "foo");
       //
       //  example:
       //  |  // use attr() to set the tab index
-      //  |  _.attr("#nodeId", "tabIndex", 3);
+      //  |  attr("#nodeId", "tabIndex", 3);
       //  |
       //
       //  example:
       //  Set multiple values at once, including event handlers:
-      //  |  _.attr("#formId", {
+      //  |  attr("#formId", {
       //  |    "foo": "bar",
       //  |    "tabIndex": -1,
       //  |    "method": "POST",
@@ -121,7 +120,7 @@ run(
       //
       //  example:
       //  Style is s special case: Only set with an object hash of styles
-      //  |  _attr("#someNode",{
+      //  |  attr("#someNode",{
       //  |    id:"bar",
       //  |    style:{
       //  |      width:"200px", height:"100px", color:"#000"
@@ -131,7 +130,7 @@ run(
       //  example:
       //  Again, only set style as an object hash of styles:
       //  |  var obj = { color:"#fff", backgroundColor:"#000" };
-      //  |  _attr("#someNode", "style", obj);
+      //  |  attr("#someNode", "style", obj);
       //  |
       //  |  // though shorter to use `style()` in this case:
       //  |  style("#someNode", obj);
@@ -171,7 +170,7 @@ run(
             //>>excludeEnd("webkitMobile");
             break;
           }
-          if(_.isFunction(value)){
+          if(lang.isFunction(value)){
             // special case: assigning an event handler
             // clobber if we can
             var attrId = attr(node, _attrId);
@@ -213,7 +212,7 @@ run(
         // node's property
         return value;  // Anything
       }
-      if(propName != "href" && (typeof value == "boolean" || _.isFunction(value))){
+      if(propName != "href" && (typeof value == "boolean" || lang.isFunction(value))){
         // node's property
         return value;  // Anything
       }
@@ -272,9 +271,16 @@ run(
     }
 
     //Add node to the _() chaining.
-    _.sharpen("attr", attr, function(ret) {
-      return ret === undefined || ret.nodeType;
-    });
+    run.modify(
+        "blade",
+        "attr",
+        ["blade"],
+        function(_) {
+            _.sharpen("attr", attr, function(ret) {
+              return ret === undefined || ret.nodeType;
+            });
+        }
+    );
 
     return attr;
   }

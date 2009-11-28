@@ -465,6 +465,9 @@ setTimeout: false, setInterval: false, clearInterval: false */
     run.version = version;
     run.isBrowser = oldState ? oldState.isBrowser : typeof window !== "undefined" && navigator && document;
     run.isPageLoaded = oldState ? oldState.isPageLoaded : !run.isBrowser;
+    if (run.isBrowser) {
+      run.doc = document;
+    }
 
     run.isArray = function (it) {
         return ostring.call(it) === "[object Array]";
@@ -955,4 +958,7 @@ setTimeout: false, setInterval: false, clearInterval: false */
         }
     }
     //****** END page load functionality ****************
+    
+    //Clean up old state, variable, no need to keep that around.
+    oldState = null;
 }());

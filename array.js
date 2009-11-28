@@ -262,6 +262,7 @@ run(
 		run.modify(
 		  "blade",
 		  "array",
+		  ["blade"],
 		  function (_) {
 			// let's reuse what we already defined for compactness: it is a one-time deal
 			array.forEach(["indexOf", "lastIndexOf", "forEach", "every", "some", "map", "filter"], function (name) {

@@ -4,10 +4,10 @@
   see: http://github.com/jrburke/blade for details
 */
 run(
-  "_.style",
+  "style",
   Function,
-  ["_", "_.node"],
-  function(_, node) {
+  ["run", "node"],
+  function(run, node) {
 
 
 	/*=====
@@ -180,7 +180,14 @@ run(
 	};
 
     //Add node to the _() chaining.
-    _.sharpen("style", style, true);
+    run.modify(
+	"blade",
+	"style",
+	["blade"],
+	function(_) {
+	    _.sharpen("style", style, true);
+	}
+    );
 
     return style;
   }

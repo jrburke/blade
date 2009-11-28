@@ -4,10 +4,10 @@
   see: http://github.com/jrburke/blade for details
 */
 run(
-  "_.$",
+  "query",
   Function,
-  ["run", "_", "_.attr", "_.NodeList"],
-  function(run, _, attr, NodeListCtor) {
+  ["run", "lang", "attr", "NodeList"],
+  function(run, lang, attr, NodeListCtor) {
 	// NOTE: 
 	//		the functions and properties are duplicates of things found
 	//		elsewhere in Dojo. They've been copied here to make query.js a
@@ -125,7 +125,7 @@ run(
 	// 					d.isOpera; // float
 	// 					d.isWebKit; // float
 	// 					d.doc ; // document element
-	var qlc = _._NodeListCtor = 		d.NodeList;
+	var qlc = NodeListCtor._NodeListCtor = 		d.NodeList;
 
 	var getDoc = function(){ return d.doc; };
 	// NOTE(alex): the spec is idiotic. CSS queries should ALWAYS be case-sensitive, but nooooooo
@@ -1506,7 +1506,7 @@ run(
 
 		//Set list constructor to desired value. This can change
 		//between calls, so always re-assign here.
-		qlc = _._NodeListCtor;
+		qlc = NodeListCtor._NodeListCtor;
 
 		if(!query){
 			return new qlc();
@@ -1555,7 +1555,7 @@ run(
 
 	// one-off function for filtering a NodeList based on a simple selector
 	d.query._filterQueryResult = function(nodeList, simpleFilter){
-		var tmpNodeList = new _._NodeListCtor();
+		var tmpNodeList = new NodeListCtor._NodeListCtor();
 		var filterFunc = getSimpleFilterFunc(getQueryParts(simpleFilter)[0]);
 		for(var x = 0, te; te = nodeList[x]; x++){
 			if(filterFunc(te)){ tmpNodeList.push(te); }
@@ -1564,7 +1564,15 @@ run(
 	}
 
   })(acme);
-    _.sharpen("$", acme.query, false);
+    
+    run.modify(
+        "blade",
+        "query",
+        ["blade"],
+        function(_) {
+            _.sharpen("$", acme.query, false);
+        }
+    );
 
     return acme.query;
   }
