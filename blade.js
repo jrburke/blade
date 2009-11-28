@@ -60,6 +60,7 @@ run("blade",
 	blade.sharpen = function (name, func, allowChaining) {
 	  //The function will receive the this._subject as the first
 	  //argument to the call.
+	  console.log("sharpen called: " + name);
 	      var f;
 	      // let's branch on assignment to gain some speed
 	      if (allowChaining === true) {

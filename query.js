@@ -1567,7 +1567,7 @@ run(
     
     run.modify(
         "blade",
-        "query",
+        "blade-query",
         ["blade"],
         function(_) {
             _.sharpen("$", acme.query, false);

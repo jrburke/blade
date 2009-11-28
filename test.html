@@ -6,8 +6,8 @@
     <script type="text/javascript">
         run(
             ["blade", "node", "style", "attr", "query"],
-            function(_, node, style, attr, bling) {
-                window._ = _;
+            function(blade, node, style, attr, bling) {
+                window._ = blade;
                 window.node = node;
                 window.style = style;
                 window.attr = attr;

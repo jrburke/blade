@@ -252,7 +252,7 @@ run(
     //Add node to the _() chaining.
     run.modify(
       "blade",
-      "node",
+      "blade-node",
       ["blade"],
       function(_) {
 	_.sharpen("node", node, true);

@@ -261,7 +261,7 @@ run(
 		//Register optional methods on blade if it happens to be loaded.
 		run.modify(
 		  "blade",
-		  "array",
+		  "blade-array",
 		  ["blade"],
 		  function (_) {
 			// let's reuse what we already defined for compactness: it is a one-time deal
