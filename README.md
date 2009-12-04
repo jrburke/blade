@@ -117,4 +117,3 @@ Blade is concerned about making an nice, small API that is easily relatable to t
 Provide BSD licensed, CLA-safe code
 -----------------------------------
 I still want BSD licensed, CLA-backed code, so I would still like all contributors to sign the Dojo CLA before contributing.
-
