@@ -1,7 +1,9 @@
 Blade
 =====
 
-Blade is an experiment in a new JavaScript toolkit. It steals a lot from the Dojo Toolkit, but uses these guiding principles:
+Blade is an experiment in a new JavaScript toolkit. Blade is focused on providing small reusable modules that are focused on making web applications in a browser easier. One of its primary features is allowing more functional modules that can be mixed in to a Blade object to allow chained object.verb() calls. So you can choose if you want raw functional speed without shared state or more convenient chained object.verb() syntax. The core Blade object will allow you to create your own approximation of a Domain Specific Language (DSL) that allows you to create your own "blade" that you can use to add your own domain-specific chainable methods to it.
+
+It steals a lot from the Dojo Toolkit, but uses these guiding principles:
 
 * Smallest possible namespace
 * Use a standalone module loader, runjs
