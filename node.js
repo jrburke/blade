@@ -3,6 +3,14 @@
   Available via the new BSD license.
   see: http://github.com/jrburke/blade for details
 */
+
+
+/*****
+ *LEGACY FILE, just keeping it for informative api reasons. Also, define
+ * "insert" instead of "place"?
+ */
+
+
 run(
   "node",
   Function,

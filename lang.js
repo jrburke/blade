@@ -7,6 +7,9 @@
 /*global run: true */
 "use strict";
 
+/*****
+ *LEGACY FILE, just keeping it for informative api reasons.
+ */
 
 run("lang",
     ["run"],

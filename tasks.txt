@@ -1,0 +1,6 @@
+- Want to allow multiple args? b(".bar", divNode).append('<div></div>'). That implies
+append specifying it want automatic type conversion of the args, but is it better
+just to say create new blades?
+
+- Create blade/bind that is just es5 bind/dojo.hitch, but should be better to type
+to allow setting "this" object first: bind(this, "func") or bind(this, function(){})
