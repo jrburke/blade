@@ -2,5 +2,30 @@
 append specifying it want automatic type conversion of the args, but is it better
 just to say create new blades?
 
-- Create blade/bind that is just es5 bind/dojo.hitch, but should be better to type
-to allow setting "this" object first: bind(this, "func") or bind(this, function(){})
+KrisKowal:
+http://twitter.com/kriskowal/status/11056458715
+Promises are about calling functions and getting the return value without blocking other events, even if there is high latency.
+http://twitter.com/kriskowal/status/11056349497
+There's a common misconception that Promises are about turning functions into functions that get called later. 
+
+http://groups.google.com/group/nodejs/browse_thread/thread/7c06276186ddcf93/14f01e82602ea260?#14f01e82602ea260
+http://github.com/kriskowal/narwhal/blob/master/lib/events.js
+
+
+Use cases for the API
+Short API spec, one page
+How many things to I have to learn to use the API?
+mimic patterns of core apis
+immutable favored
+subclass only when is-a relationship, otherwise use composition: Properties exends Hashtable, really just has-a.
+document for inheritence or prohibit it. Inheritance violates encapsulation. Exactly how every method uses each other method.
+when in doubt leave it out
+don't make client do things framework could do: reduce need for boilerplate code.
+Principle of least astonishment
+fail fast
+programmatic API for string values: otherwise string format becomes a string format
+overload with care, just give it another name.
+consistent parameter order across methods: no more than three, avoid same types
+favor zero length array vs. null
+
+

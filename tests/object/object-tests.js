@@ -1,7 +1,3 @@
-// http://alex.dojotoolkit.org/2008/10/delegate-delegate-delegate/
-//Alex's doesn't have conflict detection or method require support, which are core concepts of traits.
-//http://code.google.com/p/es-lab/wiki/Traits
-
 require({
         baseUrl: "./",
         paths: {
