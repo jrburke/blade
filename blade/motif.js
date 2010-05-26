@@ -10,8 +10,11 @@
 
 require.def("blade/motif", ["blade/object"], function (object) {
 
-    //TODO: make HTML escaping the default
     //Add comment command
+    //Fix unit test: something is wrong with it, says it passes, but
+    //with attachData change, the string is actually different now.
+    //TODO: for attachData, only generate a new ID when the data value changes,
+    //and similarly, only attach the data one time per data value.
     //TODO: ALLOW && AND || in the getobject values?
 
     var motif, commands,
@@ -25,8 +28,12 @@ require.def("blade/motif", ["blade/object"], function (object) {
         //or an array indice indicator, [, or the HTML raw output
         //indicator, ^.
         propertyRegExp = /[_\[\^\w]/,
+        startTagRegExp = /<\s*\w+/,
         templateCache = {},
-        defaultFuncs = {};
+        defaultFuncs = {},
+        attachData = true,
+        dataIdCounter = 0,
+        dataRegistry = {};
 
     function isArray(it) {
         return ostring.call(it) === "[object Array]";
@@ -44,10 +51,10 @@ require.def("blade/motif", ["blade/object"], function (object) {
         return value ? parseInt(value, 10) : 0;
     }
 
-    function getObject(name, options) {
-        var brackRegExp = /\[([\w0-9\.'"]+)\]/,
+    function getObject(name, data, options) {
+        var brackRegExp = /\[([\w0-9\.'":]+)\]/,
             part = name,
-            parent = options.data,
+            parent = data,
             match, pre, prop, obj, startIndex, endIndex, indices, result,
             parenStart, parenEnd, func;
 
@@ -55,7 +62,7 @@ require.def("blade/motif", ["blade/object"], function (object) {
         if ((parenStart = name.indexOf('(')) !== -1) {
             parenEnd = name.lastIndexOf(')');
             func = options.funcs[name.substring(0, parenStart)];
-            return func(getObject(name.substring(parenStart + 1, parenEnd), options));
+            return func(getObject(name.substring(parenStart + 1, parenEnd), data, options));
         }
 
         //Now handle regular object references, which could have [] notation.
@@ -92,31 +99,24 @@ require.def("blade/motif", ["blade/object"], function (object) {
             result = getProp(part.split("."), parent);
         }
 
-        if (result === null || result === undefined) {
-            result = '';
-        }
         return result;
     }
 
     commands = {
         '_default_': {
             doc: 'Property reference',
-            action: function (args, options, children, render) {
-                var value = args[0] ? getObject(args[0], options) : options.data,
-                    i, text = '', opts;
-                if (value === null || value === undefined) {
+            action: function (args, data, options, children, render) {
+                var value = args[0] ? getObject(args[0], data, options) : data,
+                    i, text = '';
+                if (value === null || value === undefined || (isArray(value) && !value.length)) {
                     return '';
                 } else if (children) {
                     if (isArray(value)) {
                         for (i = 0; i < value.length; i++) {
-                            opts = object.create(options);
-                            opts.data = value[i];
-                            text += render(children, opts);
+                            text += render(children, value[i], options);
                         }
                     } else {
-                        opts = object.create(options);
-                        opts.data = value;
-                        text = render(children, opts);
+                        text = render(children, value, options);
                     }
                 } else {
                     text = value;
@@ -126,32 +126,29 @@ require.def("blade/motif", ["blade/object"], function (object) {
         },
         '!': {
             doc: 'Not',
-            action: function (args, options, children, render) {
-                var value = getObject(args[0], options);
+            action: function (args, data, options, children, render) {
+                var value = getObject(args[0], data, options);
                 if (children && !value) {
-                    return render(children, options);
+                    return render(children, data, options);
                 }
                 return '';
             }
         },
         '@': {
             doc: 'Template reference',
-            action: function (args, options, children, render) {
-                var compiled = options.templates[args[0]],
-                    data = getObject(args[0], options),
-                    opts;
+            action: function (args, data, options, children, render) {
+                var compiled = options.templates[args[0]];
+                data = getObject(args[0], data, options);
                 if (!compiled) {
                     throw new Error('blade/motif: no template with name: ' + args[0]);
                 }
-                opts = object.create(options);
-                opts.data = data;
-                return render(compiled, opts);
+                return render(compiled, data, options);
             }
         },
         '.': {
             doc: 'Variable declaration',
-            action: function (args, options, children, render) {
-                options.data[args[0]] = getObject(args[1], options);
+            action: function (args, data, options, children, render) {
+                data[args[0]] = getObject(args[1], data, options);
                 //TODO: allow definining a variable then doing a block with
                 //that variable.
                 return '';
@@ -159,11 +156,11 @@ require.def("blade/motif", ["blade/object"], function (object) {
         }
     };
 
-    motif = function (text, options) {
+    motif = function (text, data, options) {
         if (typeof text === 'string') {
             text = motif.compile(text, options);
         }
-        return motif.render(text, options);
+        return motif.render(text, data, options);
     };
 
     motif.htmlEscape = function (text) {
@@ -258,6 +255,7 @@ require.def("blade/motif", ["blade/object"], function (object) {
 
     motif.compile = function (text, options) {
         //Mix in defaults
+        options = options || {};
         object.mixin(options, {
             startToken: startToken,
             endToken: endToken,
@@ -268,29 +266,38 @@ require.def("blade/motif", ["blade/object"], function (object) {
             templates: templateCache
         });
 
-        options.endRegExp = new RegExp('[^\\r\\n]*' + endToken);
+        options.endRegExp = new RegExp('[^\\r\\n]*?' + endToken);
 
         return compile(text, options);
     };
 
-    function render(compiled, options) {
-        var text = '', i;
+    function render(compiled, data, options) {
+        var text = '', i, dataId;
         if (typeof compiled === 'string') {
             text = compiled;
         } else if (isArray(compiled)) {
             for (i = 0; i < compiled.length; i++) {
-                text += render(compiled[i], options);
+                text += render(compiled[i], data, options);
             }
         } else {
             //A template command to run.
-            text = compiled.action(compiled.args, options, compiled.children, render);
+            text = compiled.action(compiled.args, data, options, compiled.children, render);
             if (!text) {
                 text = '';
             } else if (!compiled.useRawHtml && !compiled.children) {
                 //Only html escape commands that are not block actions.
-                text = motif.htmlEscape(text);
+                text = motif.htmlEscape(text.toString());
             }
         }
+
+        if (options.attachData) {
+            if (startTagRegExp.test(text)) {
+                dataId = 'id' + (dataIdCounter++);
+                text = text.replace(startTagRegExp, '$& data-blade-motif="' + dataId + '" ');
+                dataRegistry[dataId] = data;
+            }
+        }
+
         return text;
     }
 
@@ -298,8 +305,8 @@ require.def("blade/motif", ["blade/object"], function (object) {
      * Render a compiled template.
      *
      * @param {Array} compiled a compiled template
+     * @param {Object} data the data to use in the template
      * @param {Object} options options for rendering. They include:
-     * @param {Object} options.data the data to use for the template
      * @param {Object} templates a cache of compiled templates that might be
      * referenced by the primary template
      * @param {Object} options.funcs a set of functions that might be used
@@ -308,17 +315,75 @@ require.def("blade/motif", ["blade/object"], function (object) {
      * definition.
      * @returns {String} the rendered template.
      */
-    motif.render = function (compiled, options) {
+    motif.render = function (compiled, data, options) {
         //Normalize options, filling in defaults.
         options = options || {};
         object.mixin(options, {
-            data: {},
             templates: templateCache,
-            funcs: defaultFuncs
+            funcs: defaultFuncs,
+            attachData: attachData
         });
 
-        return render(compiled, options);
+        return render(compiled, data, options);
     };
+
+    /**
+     * Gets the data bound to a particular rendered template.
+     * @param {String} dataId the data ID. It can be fetched from the
+     * data-bladeMotif attribute on a rendered template.
+     * @returns {Object} the bound data. Can return undefined if there is
+     * no data stored with that ID.
+     */
+    motif.data = function (dataId) {
+        return dataRegistry[dataId];
+    };
+
+    /**
+     * Removes some data that was bound to a rendered template.
+     * @param {String} dataId the data ID. It can be fetched from the
+     * data-bladeMotif attribute on a rendered template.
+     */
+    motif.removeData = function (dataId) {
+        delete dataRegistry[dataId];
+    };
+
+    /**
+     * Gets an object given a string representation. For example,
+     * motif.getObject('foo.bar', baz) will return the baz.foo.bar value.
+     * 
+     * @param {String} name the string value to fetch. The following formats
+     * are allowed: 'foo.bar', 'foo["bar"]', 'foo[0]', 'foo[2:6]'. The last one
+     * will return an array subset. Functions are also supported: 'doSomething(foo.bar)'
+     * but the doSomething function needs to be defined in the options.funcs
+     * property, as options.funcs.doSomething = function (){}
+     *
+     * @param {Object} data the object to use as the basis for the object lookup.
+     *
+     * @param {Object} options. Options to the lookup. The only supported option
+     * at this time is options.func, and object defining functions can could be
+     * called.
+     *
+     * @returns {Object} it could return null if the name is not found off the data
+     */
+    motif.getObject = getObject;
+
+    /**
+     * Gets a compiled template from a template cache.
+     * @param {String} id the template ID
+     * @param {Object} [options] optional options object with a 'templates'
+     * property that contains some cached templates. If provided, a matching
+     * cache value for the ID will be used from options.templates, otherwise,
+     * the ID will be used to look up in the global blade/motif template cache.
+     * @returns {Object} a compiled template. It could return undefined if
+     * not match is found.
+     */
+    motif.fromTemplateCache = function (id, options) {
+        var cached = templateCache[id];
+        if (options && options.templates && options.templates[id]) {
+            cached = options.templates[id]
+        }
+        return cached;
+    }
 
     return motif;
 });
