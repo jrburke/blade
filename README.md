@@ -13,7 +13,7 @@ It steals a lot from the Dojo Toolkit, but uses these guiding principles:
 * Use advanced features where possible
 * JQuery API matching
 * Focus on the code, not the tooling
-* Provide BSD licensed, CLA-safe code
+* Provide BSD licensed, CLA-backed code
 
 The initial code in the repo does **not** fully reflect the principles above yet, it is just hacked together at the moment, more as an experiment on how best to express these choices. Also note that these choices may change over time as the experiment progresses.
 
@@ -107,6 +107,6 @@ Blade is concerned about making an nice, small API that is easily relatable to t
 * Using JSLint for all the code, including following the recommended style of 4 spaces for indents.
 * Using JSDoc for code documentation.
 
-Provide BSD licensed, CLA-safe code
+Provide BSD licensed, CLA-backed code
 -----------------------------------
 I still want BSD licensed, CLA-backed code, so I would still like all contributors to sign the Dojo CLA before contributing. Additional bi- or tri-licensing might happen, but CLA-backed BSD is a minimum.
