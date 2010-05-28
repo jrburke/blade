@@ -5,15 +5,15 @@ require({
             "require": "../../require"
         }
     },
-    ["require", "blade/motif", "blade/object"],
-    function(require, motif, object) {
+    ["require", "blade/jig", "blade/object"],
+    function(require, jig, object) {
 
         doh.register(
-            "motif",
+            "jig",
             [
                 function simple(t) {
                     require(['text!template1.html'], function (text) {
-                        var rendered = motif(text, {
+                        var rendered = jig(text, {
                                 some: {
                                     thing: {
                                         name: 'Some <> Thing',

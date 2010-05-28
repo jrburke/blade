@@ -1,5 +1,5 @@
 /**
- * @license blade/motif Copyright (c) 2004-2010, The Dojo Foundation All Rights Reserved.
+ * @license blade/jig Copyright (c) 2004-2010, The Dojo Foundation All Rights Reserved.
  * Available via the MIT, GPL or new BSD license.
  * see: http://github.com/jrburke/blade for details
  */
@@ -8,7 +8,7 @@
 
 "use strict";
 
-require.def("blade/motif", ["blade/object"], function (object) {
+require.def("blade/jig", ["blade/object"], function (object) {
 
     //Add comment command
     //Fix unit test: something is wrong with it, says it passes, but
@@ -17,7 +17,7 @@ require.def("blade/motif", ["blade/object"], function (object) {
     //and similarly, only attach the data one time per data value.
     //TODO: ALLOW && AND || in the getobject values?
 
-    var motif, commands,
+    var jig, commands,
         ostring = Object.prototype.toString,
         startToken = '{',
         endToken = '}',
@@ -140,7 +140,7 @@ require.def("blade/motif", ["blade/object"], function (object) {
                 var compiled = options.templates[args[0]];
                 data = getObject(args[0], data, options);
                 if (!compiled) {
-                    throw new Error('blade/motif: no template with name: ' + args[0]);
+                    throw new Error('blade/jig: no template with name: ' + args[0]);
                 }
                 return render(compiled, data, options);
             }
@@ -156,14 +156,14 @@ require.def("blade/motif", ["blade/object"], function (object) {
         }
     };
 
-    motif = function (text, data, options) {
+    jig = function (text, data, options) {
         if (typeof text === 'string') {
-            text = motif.compile(text, options);
+            text = jig.compile(text, options);
         }
-        return motif.render(text, data, options);
+        return jig.render(text, data, options);
     };
 
-    motif.htmlEscape = function (text) {
+    jig.htmlEscape = function (text) {
         return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
     };
 
@@ -253,7 +253,7 @@ require.def("blade/motif", ["blade/object"], function (object) {
         return compiled;
     }
 
-    motif.compile = function (text, options) {
+    jig.compile = function (text, options) {
         //Mix in defaults
         options = options || {};
         object.mixin(options, {
@@ -286,14 +286,14 @@ require.def("blade/motif", ["blade/object"], function (object) {
                 text = '';
             } else if (!compiled.useRawHtml && !compiled.children) {
                 //Only html escape commands that are not block actions.
-                text = motif.htmlEscape(text.toString());
+                text = jig.htmlEscape(text.toString());
             }
         }
 
         if (options.attachData) {
             if (startTagRegExp.test(text)) {
                 dataId = 'id' + (dataIdCounter++);
-                text = text.replace(startTagRegExp, '$& data-blade-motif="' + dataId + '" ');
+                text = text.replace(startTagRegExp, '$& data-blade-jig="' + dataId + '" ');
                 dataRegistry[dataId] = data;
             }
         }
@@ -315,7 +315,7 @@ require.def("blade/motif", ["blade/object"], function (object) {
      * definition.
      * @returns {String} the rendered template.
      */
-    motif.render = function (compiled, data, options) {
+    jig.render = function (compiled, data, options) {
         //Normalize options, filling in defaults.
         options = options || {};
         object.mixin(options, {
@@ -330,26 +330,26 @@ require.def("blade/motif", ["blade/object"], function (object) {
     /**
      * Gets the data bound to a particular rendered template.
      * @param {String} dataId the data ID. It can be fetched from the
-     * data-bladeMotif attribute on a rendered template.
+     * data-blade-jig attribute on a rendered template.
      * @returns {Object} the bound data. Can return undefined if there is
      * no data stored with that ID.
      */
-    motif.data = function (dataId) {
+    jig.data = function (dataId) {
         return dataRegistry[dataId];
     };
 
     /**
      * Removes some data that was bound to a rendered template.
      * @param {String} dataId the data ID. It can be fetched from the
-     * data-bladeMotif attribute on a rendered template.
+     * data-blade-jig attribute on a rendered template.
      */
-    motif.removeData = function (dataId) {
+    jig.removeData = function (dataId) {
         delete dataRegistry[dataId];
     };
 
     /**
      * Gets an object given a string representation. For example,
-     * motif.getObject('foo.bar', baz) will return the baz.foo.bar value.
+     * jig.getObject('foo.bar', baz) will return the baz.foo.bar value.
      * 
      * @param {String} name the string value to fetch. The following formats
      * are allowed: 'foo.bar', 'foo["bar"]', 'foo[0]', 'foo[2:6]'. The last one
@@ -365,7 +365,7 @@ require.def("blade/motif", ["blade/object"], function (object) {
      *
      * @returns {Object} it could return null if the name is not found off the data
      */
-    motif.getObject = getObject;
+    jig.getObject = getObject;
 
     /**
      * Gets a compiled template from a template cache.
@@ -373,18 +373,18 @@ require.def("blade/motif", ["blade/object"], function (object) {
      * @param {Object} [options] optional options object with a 'templates'
      * property that contains some cached templates. If provided, a matching
      * cache value for the ID will be used from options.templates, otherwise,
-     * the ID will be used to look up in the global blade/motif template cache.
+     * the ID will be used to look up in the global blade/jig template cache.
      * @returns {Object} a compiled template. It could return undefined if
      * not match is found.
      */
-    motif.fromTemplateCache = function (id, options) {
+    jig.fromTemplateCache = function (id, options) {
         var cached = templateCache[id];
         if (options && options.templates && options.templates[id]) {
-            cached = options.templates[id]
+            cached = options.templates[id];
         }
         return cached;
-    }
+    };
 
-    return motif;
+    return jig;
 });
 
