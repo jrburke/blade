@@ -11,7 +11,6 @@ function removeEol(text) {
  */
 function compareNormalizedText(t, result, testFile) {
     require(['text!' + testFile], function (testText) {
-        console.log('@@@@@HERE: ' + result);
         t.is(removeEol(testText), removeEol(
                                       //Remove data-blade-jig attributes
                                       result.replace(/data-blade-jig="id[\d]+"/g, '')
