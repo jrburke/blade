@@ -1,3 +1,28 @@
+'use strict';
+/*global require: false, doh: false */
+function removeEol(text) {
+    return text.replace(/[\r\n]/g, '').replace(/( )+/g, ' ');
+}
+
+/**
+ * This funciton removes data-blade-jig attributes, condenses multiple
+ * whitespaces down to one space, and removes any line returns/newlines
+ * that could cause differencs when tests are run on different platforms.
+ */
+function compareNormalizedText(t, result, testFile) {
+    require(['text!' + testFile], function (testText) {
+        console.log('@@@@@HERE: ' + result);
+        t.is(removeEol(testText), removeEol(
+                                      //Remove data-blade-jig attributes
+                                      result.replace(/data-blade-jig="id[\d]+"/g, '')
+                                      //Make sure the closing bracket for a tag
+                                      //does not have leading webspace, usually
+                                      //due to removing the data-blade-jig attribute
+                                      .replace(/([\w"])( )+>/g, '$1>')
+        ));
+    });
+}
+
 require({
         baseUrl: "./",
         paths: {
@@ -6,7 +31,7 @@ require({
         }
     },
     ["require", "blade/jig", "blade/object"],
-    function(require, jig, object) {
+    function (require, jig, object) {
 
         doh.register(
             "jig",
@@ -34,8 +59,7 @@ require({
                                 }
                             }
                         });
-                        console.log(rendered);
-                        t.is('<h1>Some &lt;&gt; Thing</h1> \n\n<p>Sat May 22 2010 11:45:21 GMT-0700 (PST)</p>\nColor: blue\n<ul>\n    \n        <li>small</li>\n    \n        <li>medium</li>\n    \n        <li>large</li>\n    \n</ul>\n<a href="#link">Link</a>', rendered);
+                        compareNormalizedText(t, rendered, 'template1-rendered.html');
                     });
                 }
             ]

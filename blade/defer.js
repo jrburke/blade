@@ -1,5 +1,5 @@
 /**
- * @license blade/defer Copyright (c) 2004-2010, The Dojo Foundation All Rights Reserved.
+ * @license blade/defer Copyright (c) 2010, The Dojo Foundation All Rights Reserved.
  * Available via the MIT, GPL or new BSD license.
  * see: http://github.com/jrburke/blade for details
  */

@@ -1,5 +1,5 @@
 /**
- * @license blade/jig Copyright (c) 2004-2010, The Dojo Foundation All Rights Reserved.
+ * @license blade/jig Copyright (c) 2010, The Dojo Foundation All Rights Reserved.
  * Available via the MIT, GPL or new BSD license.
  * see: http://github.com/jrburke/blade for details
  */
@@ -10,15 +10,18 @@
 
 require.def("blade/jig", ["blade/object"], function (object) {
 
-    //Add comment command
     //Fix unit test: something is wrong with it, says it passes, but
     //with attachData change, the string is actually different now.
     //TODO: for attachData, only generate a new ID when the data value changes,
     //and similarly, only attach the data one time per data value.
-    //TODO: ALLOW && AND || in the getobject values?
+
+    //If have <img class="contactPhoto" src="{foo}"> browser tries to fetch
+    //{foo} if that is in markup. Doing a <{/}img, then FF browser treats that
+    //as &lt;{/}img. Using <img{/} ends up with <img{ }="" in text.
 
     var jig, commands,
         ostring = Object.prototype.toString,
+        decode = typeof decodeURIComponent === "undefined" ? function () {} : decodeURIComponent,
         startToken = '{',
         endToken = '}',
         rawHtmlToken = '^',
@@ -28,21 +31,54 @@ require.def("blade/jig", ["blade/object"], function (object) {
         //or an array indice indicator, [, or the HTML raw output
         //indicator, ^.
         propertyRegExp = /[_\[\^\w]/,
+        defaultArg = '_',
         startTagRegExp = /<\s*\w+/,
+        wordRegExp = /^\d+$/,
+        badCommentRegExp = /\/(\/)?\s*\]/,
         templateCache = {},
-        defaultFuncs = {},
+        defaultFuncs = {
+            gt: function (a, b) {
+                return a > b;
+            },
+            gte: function (a, b) {
+                return a >= b;
+            },
+            lt: function (a, b) {
+                return a < b;
+            },
+            lte: function (a, b) {
+                return a <= b;
+            },
+            or: function (a, b) {
+                return !!(a || b);
+            },
+            and: function (a, b) {
+                return !!(a && b);
+            }
+        },
         attachData = true,
-        dataIdCounter = 0,
+        dataIdCounter = 1,
+        controlIdCounter = 1,
         dataRegistry = {};
 
     function isArray(it) {
         return ostring.call(it) === "[object Array]";
     }
 
-    function getProp(parts, context) {
+    /**
+     * Gets a property from a context object. Allows for an alternative topContext
+     * object that can be used for the first part property lookup if it is not
+     * found in context first.
+     * @param {Array} parts the list of nested properties to look up on a context.
+     * @param {Object} context the context to start the property lookup
+     * @param {Object} [topContext] an object to use as an alternate context
+     * for the very first part property to look up if it is not found in context.
+     * @returns {Object}
+     */
+    function getProp(parts, context, topContext) {
         var obj = context, i, p;
         for (i = 0; obj && (p = parts[i]); i++) {
-            obj = (p in obj ? obj[p] : undefined);
+            obj = (p in obj ? obj[p] : (topContext && i === 0 && p in topContext ? topContext[p] : undefined));
         }
         return obj; // mixed
     }
@@ -55,14 +91,52 @@ require.def("blade/jig", ["blade/object"], function (object) {
         var brackRegExp = /\[([\w0-9\.'":]+)\]/,
             part = name,
             parent = data,
+            isTop = true,
             match, pre, prop, obj, startIndex, endIndex, indices, result,
-            parenStart, parenEnd, func;
+            parenStart, parenEnd, func, funcName, arg, args, i;
+
+        //If asking for the default arg it means giving back the current data.
+        if (name === defaultArg) {
+            return data;
+        }
+
+        //If name is just an integer, just return it.
+        if (wordRegExp.test(name)) {
+            return strToInt(name);
+        }
 
         //First check for function call. Function must be globally visible.
         if ((parenStart = name.indexOf('(')) !== -1) {
             parenEnd = name.lastIndexOf(')');
-            func = options.funcs[name.substring(0, parenStart)];
-            return func(getObject(name.substring(parenStart + 1, parenEnd), data, options));
+            funcName = name.substring(0, parenStart);
+            func = options.funcs[funcName];
+            if (!func) {
+                throw new Error('Cannot find function named: ' + funcName + ' for ' + name);
+            }
+            arg = name.substring(parenStart + 1, parenEnd);
+            if (arg.indexOf(',') !== -1) {
+                args = arg.split(',');
+                for (i = args.length - 1; i >= 0; i--) {
+                    args[i] = getObject(args[i], data, options);
+                }
+                result = func.apply(null, args);
+            } else {
+                result = func(getObject(arg, data, options));
+            }
+            //If a function returns true, then use the current data as the
+            //return object.
+            if (result === true) {
+                return data;
+            } else if (parenEnd < name.length - 1) {
+                //More data properties after the function call, fetch them
+                //If the part after the paren is a dot, then skip over that part
+                if (name.charAt(parenEnd + 1) === '.') {
+                    parenEnd += 1;
+                }
+                return getObject(name.substring(parenEnd + 1, name.length), result, options);
+            } else {
+                return result;
+            }
         }
 
         //Now handle regular object references, which could have [] notation.
@@ -75,7 +149,13 @@ require.def("blade/jig", ["blade/object"], function (object) {
                 part = part.substring(1, part.length);
             }
 
-            obj = getProp(pre.split('.'), parent);
+            obj = getProp(pre.split('.'), parent, isTop ? options.context : null);
+            isTop = false;
+
+            if (!obj && prop) {
+                throw new Error('blade/jig: No property "' + prop + '" on ' + obj);
+            }
+
             if (prop.indexOf(":") !== -1) {
                 //An array slice action
                 indices = prop.split(':');
@@ -96,7 +176,7 @@ require.def("blade/jig", ["blade/object"], function (object) {
         if (!part) {
             result = parent;
         } else {
-            result = getProp(part.split("."), parent);
+            result = getProp(part.split("."), parent, isTop ? options.context : null);
         }
 
         return result;
@@ -107,8 +187,22 @@ require.def("blade/jig", ["blade/object"], function (object) {
             doc: 'Property reference',
             action: function (args, data, options, children, render) {
                 var value = args[0] ? getObject(args[0], data, options) : data,
+                    comparison = args[1] ? getObject(args[1], data, options) : undefined,
                     i, text = '';
-                if (value === null || value === undefined || (isArray(value) && !value.length)) {
+
+                //If comparing to some other value, then the value is the data,
+                //and need to compute if the values compare.
+                if (args[1]) {
+                    comparison = value === comparison;
+                    value = data;
+                } else {
+                    //Just use the value, so the value is used in the comparison.
+                    comparison = value;
+                }
+                //Want to allow returning 0 for values, so this next check is
+                //a bit verbose.
+                if (comparison === false || comparison === null ||
+                    comparison === undefined || (isArray(comparison) && !comparison.length)) {
                     return '';
                 } else if (children) {
                     if (isArray(value)) {
@@ -127,8 +221,20 @@ require.def("blade/jig", ["blade/object"], function (object) {
         '!': {
             doc: 'Not',
             action: function (args, data, options, children, render) {
-                var value = getObject(args[0], data, options);
-                if (children && !value) {
+                var value = getObject(args[0], data, options),
+                    comparison = args[1] ? getObject(args[1], data, options) : undefined;
+
+                //If comparing to some other value, then the value is the data,
+                //and need to compute if the values compare.
+                if (args[1]) {
+                    comparison = value === comparison;
+                    value = data;
+                } else {
+                    //Just use the value, so the value is used in the comparison.
+                    comparison = value;
+                }
+
+                if (children && !comparison) {
                     return render(children, data, options);
                 }
                 return '';
@@ -148,9 +254,18 @@ require.def("blade/jig", ["blade/object"], function (object) {
         '.': {
             doc: 'Variable declaration',
             action: function (args, data, options, children, render) {
-                data[args[0]] = getObject(args[1], data, options);
+                options.context[args[0]] = getObject(args[1], data, options);
                 //TODO: allow definining a variable then doing a block with
                 //that variable.
+                return '';
+            }
+        },
+        '>': {
+            doc: 'Else',
+            action: function (args, data, options, children, render) {
+                if (children) {
+                    return render(children, data, options);
+                }
                 return '';
             }
         }
@@ -171,7 +286,9 @@ require.def("blade/jig", ["blade/object"], function (object) {
         var compiled = [],
             start = 0,
             useRawHtml = false,
-            segment, index, match, tag, command, args, lastArg, lastChar, children;
+            controlId = 0,
+            segment, index, match, tag, command, args, lastArg, lastChar,
+            children, i, tempTag;
 
         while ((index = text.indexOf(options.startToken, start)) !== -1) {
             //Output any string that is before the template tag start
@@ -194,7 +311,30 @@ require.def("blade/jig", ["blade/object"], function (object) {
 
                 //Pull out the command
                 tag = text.substring(index + options.startToken.length, index + match[0].length - options.endToken.length).trim();
+
+                //decode in case the value was in an URL field, like an  href or an img src attribute
+                tag = decode(tag);
+
+                //if the command is commented out end block call, that messes with stuff,
+                //just throw to let the user know, otherwise browser can lock up.
+                if (badCommentRegExp.test(tag)) {
+                    throw new Error('blade/jig: end block tags should not be commented: ' + tag);
+                }
+
                 command = tag.charAt(0);
+
+                if (command === ']' && controlId) {
+                    //In a control block, previous block was a related control block,
+                    //so parse it without the starting ] character.
+                    tempTag = tag.substring(1).trim();
+                    if (tempTag === '[') {
+                        command = '>';
+                    } else {
+                        command = tempTag.charAt(0);
+                        //Remove the starting ] so it is seen as a regular tag
+                        tag = tempTag;
+                    }
+                }
 
                 if (command && !options.propertyRegExp.test(command)) {
                     //Have a template command
@@ -215,8 +355,33 @@ require.def("blade/jig", ["blade/object"], function (object) {
                 lastChar = lastArg.charAt(lastArg.length - 1);
                 children = null;
 
-                //If last arg ends with a [ it means a block element.
-                if (lastChar === '[') {
+                if (command === ']') {
+                    //If there are no other args, this is an end tag, to close
+                    //out a block and possibly a set of control blocks.
+                    if (lastChar !== '[') {
+                        //End of a block. End the recursion, let the parent know
+                        //the place where parsing stopped.
+                        compiled.templateEnd = start;
+
+                        //Also end of a control section, indicate it as such.
+                        compiled.endControl = true;
+                    } else {
+                        //End of a block. End the recursion, let the parent know
+                        //the place where parsing stopped, before this end tag,
+                        //so it can process it and match it to a control flow
+                        //from previous control tag.
+                        compiled.templateEnd = start - match[0].length;
+                    }
+
+                    return compiled;
+                } else if (lastChar === '[') {
+                    //If last arg ends with a [ it means a block element.
+
+                    //Assign a new control section ID if one is not in play already
+                    if (!controlId) {
+                        controlId = controlIdCounter++;
+                    }
+
                     //Adjust the last arg to not have the block character.
                     args[args.length - 1] = lastArg.substring(0, lastArg.length - 1);
 
@@ -225,23 +390,36 @@ require.def("blade/jig", ["blade/object"], function (object) {
 
                     //Skip the part of the string that is part of the child compile.
                     start += children.templateEnd;
-                } else if (command === ']') {
-                    //End of a block. End this recursion, let the parent know
-                    //the place where parsing stopped.
-                    compiled.templateEnd = start;
-                    return compiled;
                 }
 
-                //If this defines a template, save it off
+                //If this defines a template, save it off,
+                //if a comment (starts with /), then ignore it.
                 if (command === '+') {
                     options.templates[args[0]] = children;
-                } else {
+                } else if (command !== '/') {
+                    //Adjust args if some end in commas, it means they are function
+                    //args.
+                    if (args.length > 1) {
+                        for (i = args.length - 1; i >= 0; i--) {
+                            if (args[i].charAt(args[i].length - 1) === ',') {
+                                args[i] = args[i] + args[i + 1];
+                                args.splice(i + 1, 1);
+                            }
+                        }
+                    }
+
                     compiled.push({
                         action: options.commands[command].action,
                         useRawHtml: useRawHtml,
                         args: args,
+                        controlId: controlId,
                         children: children
                     });
+                }
+
+                //If the end of a block, clear the control ID
+                if (children && children.endControl) {
+                    controlId = 0;
                 }
             }
         }
@@ -268,16 +446,30 @@ require.def("blade/jig", ["blade/object"], function (object) {
 
         options.endRegExp = new RegExp('[^\\r\\n]*?' + endToken);
 
+        //Do some reset to avoid a number from getting too big.
+        controlIdCounter = 1;
+
         return compile(text, options);
     };
 
     function render(compiled, data, options) {
-        var text = '', i, dataId;
+        var text = '', i, dataId, controlId, currentControlId, currentValue, lastValue;
         if (typeof compiled === 'string') {
             text = compiled;
         } else if (isArray(compiled)) {
             for (i = 0; i < compiled.length; i++) {
-                text += render(compiled[i], data, options);
+                //Account for control blocks (if/elseif/else)
+                //control blocks all have the same control ID, so only call the next
+                //control block if the first one did not return a value.
+                currentControlId = compiled[i].controlId;
+                if (!currentControlId || currentControlId !== controlId || !lastValue) {
+                    currentValue = render(compiled[i], data, options);
+                    text += currentValue;
+                    if (currentControlId) {
+                        controlId = currentControlId;
+                        lastValue = currentValue;
+                    }
+                }
             }
         } else {
             //A template command to run.
@@ -320,9 +512,18 @@ require.def("blade/jig", ["blade/object"], function (object) {
         options = options || {};
         object.mixin(options, {
             templates: templateCache,
-            funcs: defaultFuncs,
             attachData: attachData
         });
+
+        //Mix in default funcs
+        if (options.funcs) {
+            object.mixin(options.funcs, defaultFuncs);
+        } else {
+            options.funcs = defaultFuncs;
+        }
+
+        //Mix in top level context object
+        options.context = options.context || object.create(data);
 
         return render(compiled, data, options);
     };
