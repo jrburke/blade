@@ -1,0 +1,24 @@
+(function () {
+    "use strict";
+    var require, blade, prop, i, part, parts, ref,
+        defined = {}, noRequire = false;
+    //If no RequireJS, then stub out the functions to be used in here.
+    if (typeof require === "undefined" || !require.def) {
+        noRequire = true;
+        require = {
+            def: function (name, deps, callback) {
+                var args = [];
+                //If no third arg, then just a definition without any dependencies.
+                if (!callback) {
+                    callback = deps;
+                    deps = [];
+                }
+    
+                deps.forEach(function (dep) {
+                    args.push(defined[dep]);
+                });
+    
+                defined[name] = callback.apply(null, args);
+            }
+        };
+    }

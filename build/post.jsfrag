@@ -1,0 +1,41 @@
+
+    if (noRequire) {
+        //Take all the defined things and build up the blade object.
+        blade = defined.blade || {};
+        for (prop in defined) {
+            if (defined.hasOwnProperty(prop) && prop !== 'blade') {
+                //Convert name to dot properties.
+                parts = prop.split('/');
+                ref = blade;
+                //Skip part[0], which is 'blade', and do not process
+                //last part in the loop, save for final assignment.
+                for (i = 1; i < parts.length - 1 && (part = parts[i]); i++) {
+                    ref = ref[part] = {};
+                }
+                ref[parts[i]] = defined[prop];
+            }
+        }
+
+        //Figure out how to register the object.
+        if (typeof exports !== 'undefined' && typeof module !== 'undefined') {
+            //A CommonJS environment. This will only work in CommonJS
+            //environments that allow setting the exported object.
+            if (module.setExports) {
+                module.setExports(blade);
+            } else {
+                //NodeJS
+                module.exports = blade;
+            }
+        } else {
+            if (typeof dojo !== 'undefined' && dojo.provide) {
+                dojo.provide('blade');
+            }
+            //Attach to function's context, will be a global in the browser.
+            //This means only one version of blade can be in a page. If multiple
+            //versions are allowed, use a CommonJS or RequireJS loader.
+            //Alternatively, change the following line to match what global
+            //name you want to give this version of blade.
+            this.blade = blade;
+        }
+    }
+}());
