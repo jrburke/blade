@@ -8,11 +8,11 @@
 
 "use strict";
 
-require.def("blade/funk", function () {
+require.def("blade/fn", function () {
     var slice = Array.prototype.slice,
         ostring = Object.prototype.toString,
 
-        funk = {
+        fn = {
             /**
              * Determines if the input a function.
              * @param {Object} it whatever you want to test to see if it is a function.
@@ -54,5 +54,5 @@ require.def("blade/funk", function () {
             }
         };
 
-    return funk;
+    return fn;
 });

@@ -2,6 +2,9 @@
 append specifying it want automatic type conversion of the args, but is it better
 just to say create new blades?
 
+mustache in dojo comparison, from phiggins:
+@wolframkriesing 4563 bytes after shrinksafe (with added dojo.provide/etc), 1780 with gzip. #mustache #dojo
+
 KrisKowal:
 http://twitter.com/kriskowal/status/11056458715
 Promises are about calling functions and getting the return value without blocking other events, even if there is high latency.

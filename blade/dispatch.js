@@ -8,20 +8,20 @@
 
 "use strict";
 
-require.def("blade/dispatch", ["blade/object", "blade/funk"], function (object, funk) {
+require.def("blade/dispatch", ["blade/object", "blade/fn"], function (object, fn) {
     var emptyFunc = function () {},
         mainDispatch,
         slice = Array.prototype.slice,
 
         needBind = function (f) {
-            return f !== undefined && (typeof f === "string" || funk.is(f));
+            return f !== undefined && (typeof f === "string" || fn.is(f));
         },
 
         register = function (type) {
             return function (name, obj, f) {
                 //Adjust args to allow for a bind call
                 if (needBind(f)) {
-                    f = funk.bind(obj, f);
+                    f = fn.bind(obj, f);
                 } else {
                     f = obj;
                 }
@@ -64,7 +64,7 @@ require.def("blade/dispatch", ["blade/object", "blade/funk"], function (object, 
                 var doBind = needBind(f), result, value, callback, evt;
                 //Adjust args if needing a bind
                 if (doBind) {
-                    callback = f = funk.bind(obj, f);
+                    callback = f = fn.bind(obj, f);
                 } else {
                     wantValue = f;
                     callback = obj;
@@ -169,7 +169,7 @@ require.def("blade/dispatch", ["blade/object", "blade/funk"], function (object, 
                     //otherwise it is a catch all or just an event router
                     args = evt.args;
                     if (name in this) {
-                        isFunc = funk.is(this[name]);
+                        isFunc = fn.is(this[name]);
                         value = this[name];
 
                         if (args && args.length) {

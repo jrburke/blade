@@ -8,7 +8,7 @@
 
 "use strict";
 
-require.def("blade/defer", ["blade/funk", "blade/dispatch"], function (funk, bladeDispatch) {
+require.def("blade/defer", ["blade/fn", "blade/dispatch"], function (fn, bladeDispatch) {
 
     /**
      * Creates an object representing a deferred action.
@@ -33,7 +33,7 @@ require.def("blade/defer", ["blade/funk", "blade/dispatch"], function (funk, bla
             dispatch = bladeDispatch.make(),
             makeCb = function (name) {
                 return function (obj, f) {
-                    var cb = funk.bind(obj, f);
+                    var cb = fn.bind(obj, f);
                     dispatch.onAfter(name, function (evt) {
                         return cb(evt.returnValue);
                     }, true);
