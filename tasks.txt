@@ -2,6 +2,23 @@
 append specifying it want automatic type conversion of the args, but is it better
 just to say create new blades?
 
+
+jig notes
+-------
+focused on iterating over arrays
+dot notation, array access, split array access
+functions
+default html escaping
+if/else logic
+default functions
+how scope works
+data option
+changing escape braces
+HTML nodes, works in script type="cache"?
+cannot use _
+
+-------
+
 mustache in dojo comparison, from phiggins:
 @wolframkriesing 4563 bytes after shrinksafe (with added dojo.provide/etc), 1780 with gzip. #mustache #dojo
 

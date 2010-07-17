@@ -60,7 +60,26 @@ require({
                         });
                         compareNormalizedText(t, rendered, 'template1-rendered.html');
                     });
-                }
+                },
+
+//Test checking an array index then trying to use that, suggest is() instead
+
+//Test calling a function, then accessing property, array member, array splice, subscript property name
+
+//Test the data binding better?
+
+//Add ability to scan DOM for matching class=template nodes?
+
+//Test all the built in functions
+
+//Allow script caching?
+
+//Test not, template ref, variable declaration, if/else
+
+//Test default value, _ and just {}
+
+//multiline comments work?
+
             ]
         );
         doh.run();

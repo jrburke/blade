@@ -54,9 +54,12 @@ require.def("blade/jig", ["blade/object"], function (object) {
             },
             and: function (a, b) {
                 return !!(a && b);
+            },
+            is: function (a) {
+                return !!a;
             }
         },
-        attachData = true,
+        attachData = false,
         dataIdCounter = 1,
         controlIdCounter = 1,
         dataRegistry = {};
