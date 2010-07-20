@@ -80,6 +80,8 @@ require({
 
 //multiline comments work?
 
+//Test adding functions to default set via .addFn
+
             ]
         );
         doh.run();

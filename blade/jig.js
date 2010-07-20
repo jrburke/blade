@@ -532,6 +532,16 @@ require.def("blade/jig", ["blade/object"], function (object) {
     };
 
     /**
+     * Adds functions to the default set of functions that can be used inside
+     * a template. Only the first defintion for a function name wins.
+     * @param {Object} an object whose properties are names of functions
+     * and values are the functions that correspond to the names.
+     */
+    jig.addFn = function (obj) {
+        object.mixin(defaultFuncs, obj);
+    };
+
+    /**
      * Gets the data bound to a particular rendered template.
      * @param {String} dataId the data ID. It can be fetched from the
      * data-blade-jig attribute on a rendered template.
