@@ -2,13 +2,112 @@
 <html>
 <head>
     <title>blade/jig Test</title>
-    <script type="text/javascript" src="../../require.js"></script>
-    <script type="text/javascript" src="../doh/runner.js"></script>
-    <script type="text/javascript" src="../doh/_browserRunner.js"></script>
-    <script type="text/javascript" src="jig-tests.js"></script>
+    <script src="../../require.js"></script>
+    <script src="../doh/runner.js"></script>
+    <script src="../doh/_browserRunner.js"></script>
+    <script src="jig-tests.js"></script>
+    <script>
+        'use strict';
+
+        require({
+                baseUrl: "./",
+                paths: {
+                    "blade": "../../blade",
+                    "require": "../../require"
+                }
+            },
+            ["require", "blade/jig", "blade/object", "text!dom-rendered.html", "text!dom-rendered2.html"],
+            function (require, jig, object) {
+
+                var parsedDeferred = new doh.Deferred(),
+                    parsed = [],
+                    data = [
+                        {type: "color", name: "red"},
+                        {type: "size", name: "small"},
+                        {type: "color", name: "blue"}
+                    ],
+                    ids = ['one', 'two', 'scriptTemplate', 'domTemplate'],
+                    renderedName = {
+                        one: 'dom-rendered.html',
+                        two: 'dom-rendered.html',
+                        scriptTemplate: 'dom-rendered.html',
+                        domTemplate: 'dom-rendered2.html'
+                    },
+                    i, tests;
+
+                function makeTest(id) {
+                    return {
+                        name: id,
+                        timeout: 2000,
+                        runTest: function (t) {
+                            var d = new doh.Deferred(),
+                                rendered = jig(jig.cache(id), data);
+                            compareNormalizedText(t, d, renderedName[id], rendered);
+                            return d;
+                        }
+                    };
+                }
+    
+
+                //Trigger default parsing.
+                jig.parse();
+
+                //Trigger specialized parsing.
+                jig.parse([
+                    document.getElementById('one'),
+                    document.getElementById('two')
+                ], {
+                    attachData: true,
+                    onBeforeParse: function (node) {
+                        parsed.push(node.id);
+                        if (parsed.length === 2) {
+                            doh.is('two',  parsed[0]);
+                            doh.is('one', parsed[1]);
+                            parsedDeferred.callback(true);
+                        }
+                    }
+                });
+
+                tests = [
+                    {
+                        name: 'onBeforeParse',
+                        timeout: 2000,
+                        runTest: function (t) {
+                            return parsedDeferred;
+                        }
+                    }
+                ];
+
+                //register a test for each template
+                for (i = 0; i < ids.length; i++) {
+                    tests.push(makeTest(ids[i]));
+                }
+
+                doh.register("jigDom", tests);
+                doh.run();
+            }
+        );
+    </script>
 </head>
 <body>
     <h1>blade/jig test</h1>
     <p>Check console for messages</p>
+
+    <script id="one" type="text/html">
+        <div class="{type}">
+            <span>{name}</span>
+        </div>
+    </script>
+    <div id="two" class="{type}">
+        <span>{name}</span>
+    </div>
+    <script id="scriptTemplate" type="text/template">
+        <div class="{type}">
+            <span>{name}</span>
+        </div>
+    </script>
+    <div id="domTemplate" class="template {type}">
+        <span>{name}</span>
+    </div>
 </body>
 </html>

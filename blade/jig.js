@@ -589,6 +589,8 @@ require.def("blade/jig", ["blade/object"], function (object) {
      * @returns {String} the rendered template.
      */
     jig.render = function (compiled, data, options) {
+        var i, result = '';
+
         //Normalize options, filling in defaults.
         options = options || {};
         object.mixin(options, {
@@ -606,6 +608,16 @@ require.def("blade/jig", ["blade/object"], function (object) {
         //Mix in top level context object
         options.context = options.context || object.create(data);
 
+        //If data is an array, then render should be called for each item
+        //in the array.
+        if (isArray(data)) {
+            for (i = 0; i < data.length; i++) {
+                result += render(compiled, data[i], options);
+            }
+            return result;
+        }
+
+        //Default case, just render
         return render(compiled, data, options);
     };
 

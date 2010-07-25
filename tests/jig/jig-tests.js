@@ -11,7 +11,7 @@ function removeEol(text) {
  */
 function compareNormalizedText(t, d, testFile, result) {
     require(['text!' + testFile], function (testText) {
-        doh.is(removeEol(testText), removeEol(
+        t.is(removeEol(testText), removeEol(
                                       //Remove data-blade-jig attributes
                                       result.replace(/data-blade-jig="id[\d]+"/g, '')
                                       //Make sure the closing bracket for a tag
@@ -56,12 +56,13 @@ require({
                                     },
                                     link: '<a href="#link">Link</a>'
                                 }, {
-                                funcs: {
-                                    'rev': function (val) {
-                                        return val.split('').reverse().join('');
+                                    funcs: {
+                                        'rev': function (val) {
+                                            return val.split('').reverse().join('');
+                                        }
                                     }
                                 }
-                            });
+                            );
                             compareNormalizedText(t, d, 'template1-rendered.html', rendered);
                         });
                         return d;
@@ -74,6 +75,14 @@ require({
                     runTest: function func(t) {
                         var d = new doh.Deferred();
                         require(['text!func.html'], function (text) {
+                            //add a function to the default set of functions
+                            jig.addFn({
+                                getColor: function () {
+                                    return 'blue';
+                                }
+                            });
+
+                            //Render a template
                             compareNormalizedText(t, d, 'func-rendered.html', jig(text, {
                             }, {
                                 funcs: {
@@ -85,7 +94,7 @@ require({
                                                 "two",
                                                 "three"
                                             ]
-                                        }
+                                        };
                                     }
                                 }
                             }));
@@ -94,27 +103,15 @@ require({
                     }
                 }
 
-//warn if array slice is not done on an array?
+//Test the data binding better, only in HTML page)
 
-//Test checking an array index then trying to use that, suggest is() instead
-
-//Test calling a function, then accessing property, array member, array splice, subscript property name
-
-//Test the data binding better?
-
-//Test ability to scan DOM for matching class=template nodes: (only in HTML page)?
+//Test ability to scan DOM for matching class=template nodes: (only in HTML page)
 
 //Test all the built in functions
-
-//Allow script caching?
 
 //Test not, template ref, variable declaration, if/else
 
 //Test default value, _ and just {}
-
-//multiline comments work?
-
-//Test adding functions to default set via .addFn
 
 //Test script tag templates, set class and type, see if IE works with just type.
 //Test script with multiple templates in it, via the {+ syntax}
