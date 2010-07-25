@@ -9,9 +9,9 @@ function removeEol(text) {
  * whitespaces down to one space, and removes any line returns/newlines
  * that could cause differencs when tests are run on different platforms.
  */
-function compareNormalizedText(t, result, testFile) {
+function compareNormalizedText(t, d, testFile, result) {
     require(['text!' + testFile], function (testText) {
-        t.is(removeEol(testText), removeEol(
+        doh.is(removeEol(testText), removeEol(
                                       //Remove data-blade-jig attributes
                                       result.replace(/data-blade-jig="id[\d]+"/g, '')
                                       //Make sure the closing bracket for a tag
@@ -19,6 +19,7 @@ function compareNormalizedText(t, result, testFile) {
                                       //due to removing the data-blade-jig attribute
                                       .replace(/([\w"])( )+>/g, '$1>')
         ));
+        d.callback(true);
     });
 }
 
@@ -35,32 +36,65 @@ require({
         doh.register(
             "jig",
             [
-                function simple(t) {
-                    require(['text!template1.html'], function (text) {
-                        var rendered = jig(text, {
-                                some: {
-                                    thing: {
-                                        name: 'Some <> Thing',
-                                        color: 'blue',
-                                        timestamp: 1274553921508,
-                                        sizes: [
-                                            'small',
-                                            'medium',
-                                            'large'
-                                        ]
+                {
+                    name: 'simple',
+                    timeout: 2000,
+                    runTest: function (t) {
+                        var d = new doh.Deferred();
+                        require(['text!template1.html'], function (text) {
+                            var rendered = jig(text, {
+                                    some: {
+                                        thing: {
+                                            name: 'Some <> Thing',
+                                            color: 'blue',
+                                            sizes: [
+                                                'small',
+                                                'medium',
+                                                'large'
+                                            ]
+                                        }
+                                    },
+                                    link: '<a href="#link">Link</a>'
+                                }, {
+                                funcs: {
+                                    'rev': function (val) {
+                                        return val.split('').reverse().join('');
                                     }
-                                },
-                                link: '<a href="#link">Link</a>'
-                            }, {
-                            funcs: {
-                                'date': function (timestamp) {
-                                    return (new Date(timestamp)).toString();
                                 }
-                            }
+                            });
+                            compareNormalizedText(t, d, 'template1-rendered.html', rendered);
                         });
-                        compareNormalizedText(t, rendered, 'template1-rendered.html');
-                    });
+                        return d;
+                    }
                 },
+
+                {
+                    name: 'func',
+                    timeout: 2000,
+                    runTest: function func(t) {
+                        var d = new doh.Deferred();
+                        require(['text!func.html'], function (text) {
+                            compareNormalizedText(t, d, 'func-rendered.html', jig(text, {
+                            }, {
+                                funcs: {
+                                    getData: function (name) {
+                                        return {
+                                            name: name || 'data',
+                                            options: [
+                                                "one",
+                                                "two",
+                                                "three"
+                                            ]
+                                        }
+                                    }
+                                }
+                            }));
+                        });
+                        return d;
+                    }
+                }
+
+//warn if array slice is not done on an array?
 
 //Test checking an array index then trying to use that, suggest is() instead
 
@@ -68,7 +102,7 @@ require({
 
 //Test the data binding better?
 
-//Add ability to scan DOM for matching class=template nodes?
+//Test ability to scan DOM for matching class=template nodes: (only in HTML page)?
 
 //Test all the built in functions
 
@@ -82,6 +116,8 @@ require({
 
 //Test adding functions to default set via .addFn
 
+//Test script tag templates, set class and type, see if IE works with just type.
+//Test script with multiple templates in it, via the {+ syntax}
             ]
         );
         doh.run();

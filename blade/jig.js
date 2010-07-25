@@ -4,7 +4,7 @@
  * see: http://github.com/jrburke/blade for details
  */
 /*jslint  nomen: false, plusplus: false */
-/*global require: false */
+/*global require: false, document: false */
 
 "use strict";
 
@@ -62,7 +62,10 @@ require.def("blade/jig", ["blade/object"], function (object) {
         attachData = false,
         dataIdCounter = 1,
         controlIdCounter = 1,
-        dataRegistry = {};
+        dataRegistry = {},
+        tempNode = typeof document !== 'undefined' && document.createElement ?
+                   document.createElement('div') : null,
+        templateClassRegExp = /(\s*)(template)(\s*)/;
 
     function isArray(it) {
         return ostring.call(it) === "[object Array]";
@@ -96,7 +99,7 @@ require.def("blade/jig", ["blade/object"], function (object) {
             parent = data,
             isTop = true,
             match, pre, prop, obj, startIndex, endIndex, indices, result,
-            parenStart, parenEnd, func, funcName, arg, args, i;
+            parenStart, parenEnd, func, funcName, arg, args, i, firstChar;
 
         //If asking for the default arg it means giving back the current data.
         if (name === defaultArg) {
@@ -106,6 +109,17 @@ require.def("blade/jig", ["blade/object"], function (object) {
         //If name is just an integer, just return it.
         if (wordRegExp.test(name)) {
             return strToInt(name);
+        }
+
+        //An empty string is just returned.
+        if (name === '') {
+            return '';
+        }
+
+        //If the name looks like a string, just return that.
+        firstChar = name.charAt(0);
+        if (firstChar === "'" || firstChar === "'") {
+            return name.substring(1, name.length - 1);
         }
 
         //First check for function call. Function must be globally visible.
@@ -455,6 +469,70 @@ require.def("blade/jig", ["blade/object"], function (object) {
         return compile(text, options);
     };
 
+    /**
+     * Parses an HTML document for templates, compiles them, and stores them
+     * in a cache of templates to use on the page. Only useful in browser environments.
+     * Script tags with type="text/template" are parsed, as well as DOM elements
+     * that have a class of "template" on them. The found nodes will be removed
+     * from the DOM as part of the parse operation.
+     * 
+     * @param {Array-Like} [nodes] An array-like list of nodes. Could be a NodeList.
+     * @param {Object} [options] A collection of options to use for compilation.
+     */
+    jig.parse = function (nodes, options) {
+        //Allow nodes to not be passed in, but still have options.
+        if (nodes && !nodes.length) {
+            options = nodes;
+            nodes = null;
+        }
+
+        options = options || {};
+        nodes = nodes || document.querySelectorAll('.template, script[type="text/template"]');
+
+        var node, i, text, id, clss,
+            cache = options.templates || templateCache,
+            onBeforeParse = options.onBeforeParse;
+
+        for (i = nodes.length - 1; i > -1 && (node = nodes[i]); i--) {
+            id = node.id;
+            if (!cache[id]) {
+                //Call listener to allow processing of the node before
+                //template complication happens.
+                if (onBeforeParse) {
+                    onBeforeParse(node);
+                }
+
+                if (node.nodeName.toUpperCase() === 'SCRIPT') {
+                    text = node.text.trim();
+                    if (node.parentNode) {
+                        node.parentNode.removeChild(node);
+                    }
+                } else {
+                    //Put node in temp node to get the innerHTML so node's element
+                    //html is in the output.
+                    tempNode.appendChild(node);
+
+                    //Remove the id node and the template class, since this
+                    //template text could be duplicated many times, and a
+                    //template class is no longer useful.
+                    node.removeAttribute('id');
+                    clss = (node.getAttribute('class') || '').trim();
+                    if (clss) {
+                        node.setAttribute('class', clss.replace(templateClassRegExp, '$1$3'));
+                    }
+
+                    //Decode braces when may get URL encoded as part of hyperlinks
+                    text = tempNode.innerHTML.replace(/%7B/g, '{').replace(/%7D/g, '}');
+
+                    //Clear out the temp node for the next use.
+                    tempNode.removeChild(node);
+                }
+
+                cache[id] = jig.compile(text, options);
+            }  
+        }
+    };
+
     function render(compiled, data, options) {
         var text = '', i, dataId, controlId, currentControlId, currentValue, lastValue;
         if (typeof compiled === 'string') {
@@ -533,12 +611,13 @@ require.def("blade/jig", ["blade/object"], function (object) {
 
     /**
      * Adds functions to the default set of functions that can be used inside
-     * a template. Only the first defintion for a function name wins.
+     * a template. Newer definitions of a function will take precedence
+     * over the previously registered function.
      * @param {Object} an object whose properties are names of functions
      * and values are the functions that correspond to the names.
      */
     jig.addFn = function (obj) {
-        object.mixin(defaultFuncs, obj);
+        object.mixin(defaultFuncs, obj, true);
     };
 
     /**
@@ -591,7 +670,7 @@ require.def("blade/jig", ["blade/object"], function (object) {
      * @returns {Object} a compiled template. It could return undefined if
      * not match is found.
      */
-    jig.fromTemplateCache = function (id, options) {
+    jig.cache = function (id, options) {
         var cached = templateCache[id];
         if (options && options.templates && options.templates[id]) {
             cached = options.templates[id];
