@@ -6,9 +6,9 @@
 /*jslint  nomen: false, plusplus: false */
 /*global require: false */
 
-"use strict";
+'use strict';
 
-require.def("blade/fn", function () {
+require.def('blade/fn', function () {
     var slice = Array.prototype.slice,
         ostring = Object.prototype.toString,
 
@@ -19,7 +19,7 @@ require.def("blade/fn", function () {
              * @returns Boolean
              */
             is: function (it) {
-                return ostring.call(it) === "[object Function]";
+                return ostring.call(it) === '[object Function]';
             },
 
             /**
@@ -44,7 +44,7 @@ require.def("blade/fn", function () {
                 }
 
                 //Make sure we have a function
-                if (typeof f === "string") {
+                if (typeof f === 'string') {
                     f = obj[f];
                 }
                 var args = slice.call(arguments, 2);

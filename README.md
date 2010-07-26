@@ -1,7 +1,7 @@
 Blade
 =====
 
-Blade is a JavaScript toolkit experiment. Blade is focused on providing small reusable modules that are focused on making web applications in the browser easier. One of its primary features is allowing more functional modules that can be mixed in to a Blade object to allow chained object.verb() calls. So you can choose if you want raw functional speed without shared state or more convenient chained object.verb() syntax. The core Blade object will allow you to create your own approximation of a Domain Specific Language (DSL) that allows you to create your own "blade" that you can use to add your own domain-specific chainable methods to it.
+Blade is a JavaScript toolkit experiment. Blade is focused on providing small reusable modules that are focused on making web applications in the browser easier. One of its primary features is allowing more functional modules that can be mixed in to a Blade object to allow chained object.verb() calls. So you can choose if you want raw functional speed without shared state or more convenient chained object.verb() syntax. The core Blade object will allow you to create your own approximation of a Domain Specific Language (DSL) that allows you to create your own 'blade' that you can use to add your own domain-specific chainable methods to it.
 
 It steals a lot from the Dojo Toolkit, but uses these guiding principles:
 
@@ -31,19 +31,19 @@ object.verb or verb(object)
 ---------------------------
 object.verb is normally more readable, but global namespace pollution, including modifying native prototypes, is not scalable. So blade uses the blade function, blade() to allow you to call the library functions as object.verb():
 
-    blade("<h2>${name}</h2>").template({
-        name: "First Point"
+    blade('<h2>${name}</h2>').template({
+        name: 'First Point'
     });
 
-blade() wraps its argument in an object that defines all the methods available from blade, and normally the methods are chainable. You can get the original object back by using the "o" property:
+blade() wraps its argument in an object that defines all the methods available from blade, and normally the methods are chainable. You can get the original object back by using the 'o' property:
 
     require(
-        ["blade", "blade/node", "blade/attr", "blade/style"],
+        ['blade', 'blade/node', 'blade/attr', 'blade/style'],
         function (b, node, attr, style) {
-            b("div") //Wraps the string "div" in the blade methods
-              .node()  //Converts the string to a node. The internal object is a node now instead of the "div" string.
-              .attr("id", "main") //expects a DOM node, so converts "div" to be a new div node, then sets the id to "of" for the div node.
-              .style("display", "none") //set the display style to none to hide it.
+            b('div') //Wraps the string 'div' in the blade methods
+              .node()  //Converts the string to a node. The internal object is a node now instead of the 'div' string.
+              .attr('id', 'main') //expects a DOM node, so converts 'div' to be a new div node, then sets the id to 'of' for the div node.
+              .style('display', 'none') //set the display style to none to hide it.
               .place(_.body()) //append the node to the document body.
               .o //gives back the raw DOM node.
         }
@@ -51,21 +51,21 @@ blade() wraps its argument in an object that defines all the methods available f
 
 Blade will use a kind of type inference to know how to convert the bladed object to the right type. Normally this means converting a bladed string into a DOM node or a doing a DOM selection. For instance:
 
-    blade("body div").trim(); //treats the bladed object as a string
-    blade("body div").attr("title", "new") //calls DOM selector engine, then calls attr() for each node in the node list.
-    blade("<h2>${name}</h2>").template({
-        name: "First Point"
+    blade('body div').trim(); //treats the bladed object as a string
+    blade('body div').attr('title', 'new') //calls DOM selector engine, then calls attr() for each node in the node list.
+    blade('<h2>${name}</h2>').template({
+        name: 'First Point'
     }) //bladed object treated like string.
-    .attr("title", "First Point"); //then converted to a DOM node and its title attribute is set.
+    .attr('title', 'First Point'); //then converted to a DOM node and its title attribute is set.
 
 If you prefer not to use the chainable syntax, then the plain, verb(object) syntax is also available. However, this syntax may not do the full type conversion that blade() does:
 
     require(
-        ["blade/node", "blade/attr", "blade/style"],
+        ['blade/node', 'blade/attr', 'blade/style'],
         function (node, attr, style) {
-            var n = node("div");
-            attr(n, "id", "main");
-            style(n, "display", "none");
+            var n = node('div');
+            attr(n, 'id', 'main');
+            style(n, 'display', 'none');
             place(n, document.body);
        }
     );

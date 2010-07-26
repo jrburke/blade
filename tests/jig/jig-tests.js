@@ -24,17 +24,17 @@ function compareNormalizedText(t, d, testFile, result) {
 }
 
 require({
-        baseUrl: "./",
+        baseUrl: './',
         paths: {
-            "blade": "../../blade",
-            "require": "../../require"
+            'blade': '../../blade',
+            'require': '../../require'
         }
     },
-    ["require", "blade/jig", "blade/object"],
+    ['require', 'blade/jig', 'blade/object'],
     function (require, jig, object) {
 
         doh.register(
-            "jig",
+            'jig',
             [
                 {
                     name: 'simple',
@@ -56,7 +56,7 @@ require({
                                     },
                                     link: '<a href="#link">Link</a>'
                                 }, {
-                                    funcs: {
+                                    fn: {
                                         'rev': function (val) {
                                             return val.split('').reverse().join('');
                                         }
@@ -85,16 +85,67 @@ require({
                             //Render a template
                             compareNormalizedText(t, d, 'func-rendered.html', jig(text, {
                             }, {
-                                funcs: {
+                                fn: {
                                     getData: function (name) {
                                         return {
                                             name: name || 'data',
                                             options: [
-                                                "one",
-                                                "two",
-                                                "three"
+                                                'one',
+                                                'two',
+                                                'three'
                                             ]
                                         };
+                                    }
+                                }
+                            }));
+                        });
+                        return d;
+                    }
+                },
+
+                {
+                    name: 'builtin',
+                    timeout: 2000,
+                    runTest: function builtin(t) {
+                        var d = new doh.Deferred();
+                        require(['text!builtin.html'], function (text) {
+                            //Render a template
+                            compareNormalizedText(t, d, 'builtin-rendered.html', jig(text, {
+                                args: {
+                                    fortyone: 41,
+                                    fortytwo: 42,
+                                    fortythree: 43,
+                                    something: 'something',
+                                    nothing: null
+                                }
+                            }));
+                        });
+                        return d;
+                    }
+                },
+
+                {
+                    name: 'flow',
+                    timeout: 2000,
+                    runTest: function builtin(t) {
+                        var d = new doh.Deferred();
+                        require(['text!flow.html'], function (text) {
+                            //Render a template
+                            compareNormalizedText(t, d, 'flow-rendered.html', jig(text, {
+                                args: [
+                                    'foo',
+                                    ['bar', 'baz'],
+                                    {
+                                        name: 'fuz'
+                                    }
+                                ]
+                            }, {
+                                fn: {
+                                    isString: function (val) {
+                                        return typeof val === 'string';
+                                    },
+                                    isArray: function (val) {
+                                        return Object.prototype.toString.call(val) === '[object Array]';
                                     }
                                 }
                             }));
@@ -105,16 +156,7 @@ require({
 
 //Test the data binding better, only in HTML page)
 
-//Test ability to scan DOM for matching class=template nodes: (only in HTML page)
-
-//Test all the built in functions
-
-//Test not, template ref, variable declaration, if/else
-
-//Test default value, _ and just {}
-
 //Test script tag templates, set class and type, see if IE works with just type.
-//Test script with multiple templates in it, via the {+ syntax}
             ]
         );
         doh.run();

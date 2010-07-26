@@ -5,9 +5,9 @@
 */
 /*jslint nomen: false, plusplus: false, newcap: false */
 /*global require: true */
-"use strict";
+'use strict';
 
-require.def("blade", function () {
+require.def('blade', function () {
     /**
      * Adds a new method to the prototype of a function that allows chained
      * calls.
@@ -71,7 +71,7 @@ require.def("blade", function () {
      * chainable DSLs
      * @param {String} [extendName] optional string that defines the name of
      * the function that allows adding method extensions to this function. By
-     * default the name is "extend". Blade calls it "sharpen".
+     * default the name is 'extend'. Blade calls it 'sharpen'.
      *
      * @returns {Function} a constructor function that can be used in method chains. Follows
      * the blade model where new instances 
@@ -105,7 +105,7 @@ require.def("blade", function () {
         };
 
         //Attach the 
-        Ctor[extendName || "extend"] = function () {
+        Ctor[extendName || 'extend'] = function () {
             return extend.apply(null, [Ctor].concat(arguments));
         };
 
@@ -113,7 +113,7 @@ require.def("blade", function () {
     }
 
     //Create the actual blade constructor.
-    var blade = forge("sharpen");
+    var blade = forge('sharpen');
     blade.forge = forge;
 
     return blade;

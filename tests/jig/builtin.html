@@ -1,0 +1,53 @@
+{gt(42,args.fortyone) [}
+    gt OK
+{]}
+{!gt(42,args.fortytwo) [}
+    !gt OK
+{]}
+
+{gte(42,args.fortytwo) [}
+    gte OK
+{]}
+{!gte(42,args.fortythree) [}
+    !gte OK
+{]}
+
+{lt(42,args.fortythree) [}
+    lt OK
+{]}
+{!lt(42,args.fortytwo) [}
+    !lt OK
+{]}
+
+{lte(42,args.fortytwo) [}
+    lte OK
+{]}
+{!lte(42,args.fortyone) [}
+    !lte OK
+{]}
+
+{or(args.nothing, args.something) [}
+    or OK
+{]}
+{or(args.nothing, args.doesnotexist) [}
+    or not OK
+{] [}
+    or else OK
+{]}
+
+{and(args.something,args.fortytwo) [}
+    and OK
+{]}
+{and(args.something,args.nothing) [}
+    and not OK
+{] [}
+    and else OK
+{]}
+
+{is(args.something) [}
+    is OK
+{]}
+{!is(args.nothing) [}
+    !is OK
+{]}
+

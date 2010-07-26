@@ -6,9 +6,9 @@
 /*jslint  nomen: false, plusplus: false */
 /*global require: false */
 
-"use strict";
+'use strict';
 
-require.def("blade/defer", ["blade/fn", "blade/dispatch"], function (fn, bladeDispatch) {
+require.def('blade/defer', ['blade/fn', 'blade/dispatch'], function (fn, bladeDispatch) {
 
     /**
      * Creates an object representing a deferred action.
@@ -43,7 +43,7 @@ require.def("blade/defer", ["blade/fn", "blade/dispatch"], function (fn, bladeDi
 
         //Set up the cancellation action if desired.
         if (onCancel) {
-            dispatch.onAfter("cancel", function (evt) {
+            dispatch.onAfter('cancel', function (evt) {
                 return onCancel();
             });
         }
@@ -51,7 +51,7 @@ require.def("blade/defer", ["blade/fn", "blade/dispatch"], function (fn, bladeDi
         dfd.send = function (name, value) {
             //Do not allow sending more than one message for the deferred.
             if (sentName) {
-                throw new Error("blade/defer object already sent event: " + sentName);
+                throw new Error('blade/defer object already sent event: ' + sentName);
             }
             sentName = name;
 
@@ -63,7 +63,7 @@ require.def("blade/defer", ["blade/fn", "blade/dispatch"], function (fn, bladeDi
 
             //If no error handlers on this deferred, be sure to at least
             //log it to allow some sort of debugging.
-            if (name === "error" &&
+            if (name === 'error' &&
                 (!dispatch._dispatchAfterQ || ! dispatch._dispatchAfterQ.error) &&
                 defer.onErrorDefault) {
                 defer.onErrorDefault(value);
@@ -73,9 +73,9 @@ require.def("blade/defer", ["blade/fn", "blade/dispatch"], function (fn, bladeDi
         };
 
         dfd.listener = {
-            ok: makeCb("ok"),
-            error: makeCb("error"),
-            cancel: makeCb("cancel")
+            ok: makeCb('ok'),
+            error: makeCb('error'),
+            cancel: makeCb('cancel')
         };
 
         //Allow wiring up other event names
@@ -89,7 +89,7 @@ require.def("blade/defer", ["blade/fn", "blade/dispatch"], function (fn, bladeDi
     }
 
     defer.onErrorDefault = function (err) {
-        if (typeof console !== "undefined") {
+        if (typeof console !== 'undefined') {
             console.error(err);
         }
     }

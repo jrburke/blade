@@ -6,15 +6,15 @@
 /*jslint  nomen: false, plusplus: false */
 /*global require: false */
 
-"use strict";
+'use strict';
 
-require.def("blade/dispatch", ["blade/object", "blade/fn"], function (object, fn) {
+require.def('blade/dispatch', ['blade/object', 'blade/fn'], function (object, fn) {
     var emptyFunc = function () {},
         mainDispatch,
         slice = Array.prototype.slice,
 
         needBind = function (f) {
-            return f !== undefined && (typeof f === "string" || fn.is(f));
+            return f !== undefined && (typeof f === 'string' || fn.is(f));
         },
 
         register = function (type) {
@@ -51,7 +51,7 @@ require.def("blade/dispatch", ["blade/object", "blade/fn"], function (object, fn
             };
         },
 
-        onAfter = register("_dispatchAfterQ"),
+        onAfter = register('_dispatchAfterQ'),
 
         /**
          * Defines the dispatch object. You can call its methods for a general
@@ -59,7 +59,7 @@ require.def("blade/dispatch", ["blade/object", "blade/fn"], function (object, fn
          * to another object to give that object dispatch capabilities.
          */
         dispatch = {
-            on: register("_dispatchBeforeQ"),
+            on: register('_dispatchBeforeQ'),
             onAfter: function (name, obj, f, wantValue) {
                 var doBind = needBind(f), result, value, callback, evt;
                 //Adjust args if needing a bind
@@ -118,7 +118,7 @@ require.def("blade/dispatch", ["blade/object", "blade/fn"], function (object, fn
              * @returns {Object} the returnValue from any 
              */
             send: function (message) {
-                if (typeof message === "string") {
+                if (typeof message === 'string') {
                     //Normalize message to object arg form.
                     message = {
                         name: message,

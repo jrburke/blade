@@ -96,7 +96,7 @@ If this object is applied to this template, via the jig() function:
         //Third arg is an options argument, with one option being a set
         //of functions to allow in the template
         {
-            funcs: {
+            fn: {
                 'date': function (timestamp) {
                     return (new Date(timestamp)).toString();
                 }

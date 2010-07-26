@@ -6,9 +6,9 @@
 /*jslint  nomen: false, plusplus: false */
 /*global require: false, document: false */
 
-"use strict";
+'use strict';
 
-require.def("blade/jig", ["blade/object"], function (object) {
+require.def('blade/jig', ['blade/object'], function (object) {
 
     //Fix unit test: something is wrong with it, says it passes, but
     //with attachData change, the string is actually different now.
@@ -21,10 +21,11 @@ require.def("blade/jig", ["blade/object"], function (object) {
 
     var jig, commands,
         ostring = Object.prototype.toString,
-        decode = typeof decodeURIComponent === "undefined" ? function () {} : decodeURIComponent,
+        decode = typeof decodeURIComponent === 'undefined' ? function () {} : decodeURIComponent,
         startToken = '{',
         endToken = '}',
         rawHtmlToken = '^',
+        templateRefToken = '@',
         argSeparator = ' ',
         //First character in an action cannot be something that
         //could be the start of a regular JS property name,
@@ -68,7 +69,7 @@ require.def("blade/jig", ["blade/object"], function (object) {
         templateClassRegExp = /(\s*)(template)(\s*)/;
 
     function isArray(it) {
-        return ostring.call(it) === "[object Array]";
+        return ostring.call(it) === '[object Array]';
     }
 
     /**
@@ -126,7 +127,7 @@ require.def("blade/jig", ["blade/object"], function (object) {
         if ((parenStart = name.indexOf('(')) !== -1) {
             parenEnd = name.lastIndexOf(')');
             funcName = name.substring(0, parenStart);
-            func = options.funcs[funcName];
+            func = options.fn[funcName];
             if (!func) {
                 throw new Error('Cannot find function named: ' + funcName + ' for ' + name);
             }
@@ -158,7 +159,7 @@ require.def("blade/jig", ["blade/object"], function (object) {
 
         //Now handle regular object references, which could have [] notation.
         while ((match = brackRegExp.exec(part))) {
-            prop = match[1].replace(/['"]/g, "");
+            prop = match[1].replace(/['"]/g, '');
             pre = part.substring(0, match.index);
 
             part = part.substring(match.index + match[0].length, part.length);
@@ -173,7 +174,7 @@ require.def("blade/jig", ["blade/object"], function (object) {
                 throw new Error('blade/jig: No property "' + prop + '" on ' + obj);
             }
 
-            if (prop.indexOf(":") !== -1) {
+            if (prop.indexOf(':') !== -1) {
                 //An array slice action
                 indices = prop.split(':');
                 startIndex = strToInt(indices[0]);
@@ -193,7 +194,7 @@ require.def("blade/jig", ["blade/object"], function (object) {
         if (!part) {
             result = parent;
         } else {
-            result = getProp(part.split("."), parent, isTop ? options.context : null);
+            result = getProp(part.split('.'), parent, isTop ? options.context : null);
         }
 
         return result;
@@ -260,11 +261,11 @@ require.def("blade/jig", ["blade/object"], function (object) {
         '@': {
             doc: 'Template reference',
             action: function (args, data, options, children, render) {
-                var compiled = options.templates[args[0]];
-                data = getObject(args[0], data, options);
+                var compiled = jig.cache(args[0], options);
                 if (!compiled) {
                     throw new Error('blade/jig: no template with name: ' + args[0]);
                 }
+                data = getObject(args.length > 1 ? args[1] : defaultArg, data, options);
                 return render(compiled, data, options);
             }
         },
@@ -296,7 +297,7 @@ require.def("blade/jig", ["blade/object"], function (object) {
     };
 
     jig.htmlEscape = function (text) {
-        return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     };
 
     function compile(text, options) {
@@ -363,8 +364,13 @@ require.def("blade/jig", ["blade/object"], function (object) {
                 }
 
                 //Allow for raw HTML output, but it is not the default.
+                //template references use raw by default though.
                 if ((useRawHtml = tag.indexOf(options.rawHtmlToken) === 0)) {
                     tag = tag.substring(options.rawHtmlToken.length, tag.length);
+                }
+                //However, template references use raw always
+                if (command === templateRefToken) {
+                    useRawHtml = true;
                 }
 
                 args = tag.split(options.argSeparator);
@@ -582,7 +588,7 @@ require.def("blade/jig", ["blade/object"], function (object) {
      * @param {Object} options options for rendering. They include:
      * @param {Object} templates a cache of compiled templates that might be
      * referenced by the primary template
-     * @param {Object} options.funcs a set of functions that might be used
+     * @param {Object} options.fn a set of functions that might be used
      * by the template(s). Each property on this object is a name of a function
      * that may show up in the templates, and the value should be the function
      * definition.
@@ -598,11 +604,11 @@ require.def("blade/jig", ["blade/object"], function (object) {
             attachData: attachData
         });
 
-        //Mix in default funcs
-        if (options.funcs) {
-            object.mixin(options.funcs, defaultFuncs);
+        //Mix in default functions
+        if (options.fn) {
+            object.mixin(options.fn, defaultFuncs);
         } else {
-            options.funcs = defaultFuncs;
+            options.fn = defaultFuncs;
         }
 
         //Mix in top level context object
@@ -657,10 +663,10 @@ require.def("blade/jig", ["blade/object"], function (object) {
      * jig.getObject('foo.bar', baz) will return the baz.foo.bar value.
      * 
      * @param {String} name the string value to fetch. The following formats
-     * are allowed: 'foo.bar', 'foo["bar"]', 'foo[0]', 'foo[2:6]'. The last one
+     * are allowed: 'foo.bar', 'foo['bar']', 'foo[0]', 'foo[2:6]'. The last one
      * will return an array subset. Functions are also supported: 'doSomething(foo.bar)'
-     * but the doSomething function needs to be defined in the options.funcs
-     * property, as options.funcs.doSomething = function (){}
+     * but the doSomething function needs to be defined in the options.fn
+     * property, as options.fn.doSomething = function (){}
      *
      * @param {Object} data the object to use as the basis for the object lookup.
      *

@@ -6,9 +6,9 @@
 /*jslint plusplus: false */
 /*global require: false */
 
-"use strict";
+'use strict';
 
-require.def("blade/object", function () {
+require.def('blade/object', function () {
 
     var empty = {},
 
@@ -58,7 +58,7 @@ require.def("blade/object", function () {
             constructor = function () {
                 //Protect against a missing new
                 if (!(this instanceof constructor)) {
-                    throw new Error("blade/object: constructor function called without 'new' in front");
+                    throw new Error('blade/object: constructor function called without "new" in front');
                 }
 
                 //Call initializer if present.
@@ -104,7 +104,7 @@ require.def("blade/object", function () {
      * unless override is set to true. Borrowed from Dojo.
      *
      * To extend a prototype on a given object, pass in the prototype property
-     * to mixin. For example: object.mixin(func.prototype, {a: "b"});
+     * to mixin. For example: object.mixin(func.prototype, {a: 'b'});
      * 
      * @param {Object} target the object receiving the mixed in properties.
      * 

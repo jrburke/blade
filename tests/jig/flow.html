@@ -1,0 +1,23 @@
+<div>
+    {args [}
+        {@ branch}
+    {]}
+</div>
+
+{+ branch [}
+    {isString(_) [}
+        {@ sub}
+    {] isArray(_) [}
+        {@ subArray _}
+    {] [}
+        Some object with name: {name}
+    {]}
+{]}
+
+{+ sub [}
+    <h1>{_}</h1>
+{]}
+
+{+ subArray [}
+    <li>{}</li>
+{]}
