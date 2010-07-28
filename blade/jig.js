@@ -4,7 +4,7 @@
  * see: http://github.com/jrburke/blade for details
  */
 /*jslint  nomen: false, plusplus: false */
-/*global require: false, document: false */
+/*global require: false, document: false, console: false */
 
 'use strict';
 
@@ -129,7 +129,8 @@ require.def('blade/jig', ['blade/object'], function (object) {
             funcName = name.substring(0, parenStart);
             func = options.fn[funcName];
             if (!func) {
-                throw new Error('Cannot find function named: ' + funcName + ' for ' + name);
+                jig.error('Cannot find function named: ' + funcName + ' for ' + name);
+                return '';
             }
             arg = name.substring(parenStart + 1, parenEnd);
             if (arg.indexOf(',') !== -1) {
@@ -171,7 +172,8 @@ require.def('blade/jig', ['blade/object'], function (object) {
             isTop = false;
 
             if (!obj && prop) {
-                throw new Error('blade/jig: No property "' + prop + '" on ' + obj);
+                jig.error('blade/jig: No property "' + prop + '" on ' + obj);
+                return '';
             }
 
             if (prop.indexOf(':') !== -1) {
@@ -186,6 +188,9 @@ require.def('blade/jig', ['blade/object'], function (object) {
                     obj = obj.slice(startIndex, endIndex);
                 }
             } else {
+                if (options.strict && !(prop in obj)) {
+                    jig.error('blade/jig: no property "' + prop + '"');
+                }
                 obj = obj[prop];
             }
             parent = obj;
@@ -195,6 +200,10 @@ require.def('blade/jig', ['blade/object'], function (object) {
             result = parent;
         } else {
             result = getProp(part.split('.'), parent, isTop ? options.context : null);
+        }
+
+        if (options.strict && result === undefined) {
+            jig.error('blade/jig: undefined value for property "' + name + '"');
         }
 
         return result;
@@ -263,7 +272,7 @@ require.def('blade/jig', ['blade/object'], function (object) {
             action: function (args, data, options, children, render) {
                 var compiled = jig.cache(args[0], options);
                 if (!compiled) {
-                    throw new Error('blade/jig: no template with name: ' + args[0]);
+                    jig.error('blade/jig: no template with name: ' + args[0]);
                 }
                 data = getObject(args.length > 1 ? args[1] : defaultArg, data, options);
                 return render(compiled, data, options);
@@ -601,7 +610,8 @@ require.def('blade/jig', ['blade/object'], function (object) {
         options = options || {};
         object.mixin(options, {
             templates: templateCache,
-            attachData: attachData
+            attachData: attachData,
+            strict: jig.strict
         });
 
         //Mix in default functions
@@ -626,6 +636,21 @@ require.def('blade/jig', ['blade/object'], function (object) {
         //Default case, just render
         return render(compiled, data, options);
     };
+
+    /**
+     * Enable strict template rendering checks. If a property does not exist on a
+     * data object, then an error will be logged.
+     */
+    jig.strict = false;
+
+    /**
+     * Track errors by logging to console if available.
+     */
+    jig.error = typeof console !== 'undefined' && console.error ?
+            function (msg) {
+                console.error(msg);
+            }
+        : function () {};
 
     /**
      * Adds functions to the default set of functions that can be used inside
