@@ -163,11 +163,7 @@ require.def('blade/jig', ['blade/object'], function (object) {
             } else {
                 result = func(getObject(arg, data, options));
             }
-            //If a function returns true, then use the current data as the
-            //return object.
-            if (result === true) {
-                return data;
-            } else if (parenEnd < name.length - 1) {
+            if (parenEnd < name.length - 1) {
                 //More data properties after the function call, fetch them
                 //If the part after the paren is a dot, then skip over that part
                 if (name.charAt(parenEnd + 1) === '.') {
@@ -258,6 +254,11 @@ require.def('blade/jig', ['blade/object'], function (object) {
                             text += render(children, value[i], options);
                         }
                     } else {
+                        //If the value is true or false, then just use parent data.
+                        //for the child rendering.
+                        if (typeof value === 'boolean') {
+                            value = data;
+                        }
                         text = render(children, value, options);
                     }
                 } else {
