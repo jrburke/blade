@@ -38,6 +38,9 @@ require.def('blade/jig', ['blade/object'], function (object) {
         badCommentRegExp = /\/(\/)?\s*\]/,
         templateCache = {},
         defaultFuncs = {
+            eq: function (a, b) {
+                return a === b;
+            },
             gt: function (a, b) {
                 return a > b;
             },
@@ -58,6 +61,24 @@ require.def('blade/jig', ['blade/object'], function (object) {
             },
             is: function (a) {
                 return !!a;
+            },
+            eachProp: function (obj) {
+                //Converts object properties into an array
+                //of objects that have 'prop' and 'value' properties.
+                var prop, ret = [];
+                for (prop in obj) {
+                    if (obj.hasOwnProperty(prop)) {
+                        ret.push({
+                            prop: prop,
+                            value: obj[prop]
+                        });
+                    }
+                }
+
+                //Sort the names to be roughly alphabetic
+                return ret.sort(function (a, b) {
+                    return a.prop > b.prop ? 1 : -1;
+                });
             }
         },
         attachData = false,
@@ -85,7 +106,7 @@ require.def('blade/jig', ['blade/object'], function (object) {
     function getProp(parts, context, topContext) {
         var obj = context, i, p;
         for (i = 0; obj && (p = parts[i]); i++) {
-            obj = (p in obj ? obj[p] : (topContext && i === 0 && p in topContext ? topContext[p] : undefined));
+            obj = (typeof obj === 'object' && p in obj ? obj[p] : (topContext && i === 0 && p in topContext ? topContext[p] : undefined));
         }
         return obj; // mixed
     }
@@ -542,8 +563,7 @@ require.def('blade/jig', ['blade/object'], function (object) {
                     //Clear out the temp node for the next use.
                     tempNode.removeChild(node);
                 }
-
-                cache[id] = jig.compile(text, options);
+                jig.cache(id, text, options);
             }  
         }
     };
@@ -704,8 +724,10 @@ require.def('blade/jig', ['blade/object'], function (object) {
     jig.getObject = getObject;
 
     /**
-     * Gets a compiled template from a template cache.
+     * Gets or sets a compiled template from a template cache.
      * @param {String} id the template ID
+     * @param {String} [value] A string to compile to a template, or
+     * the compiled template value.
      * @param {Object} [options] optional options object with a 'templates'
      * property that contains some cached templates. If provided, a matching
      * cache value for the ID will be used from options.templates, otherwise,
@@ -713,12 +735,27 @@ require.def('blade/jig', ['blade/object'], function (object) {
      * @returns {Object} a compiled template. It could return undefined if
      * not match is found.
      */
-    jig.cache = function (id, options) {
-        var cached = templateCache[id];
-        if (options && options.templates && options.templates[id]) {
-            cached = options.templates[id];
+    jig.cache = function (id, value, options) {
+        //Convert the value to a compiled templated if necessary.
+        if (typeof value === 'string') {
+            value = jig.compile(value, options);
         }
-        return cached;
+
+        //If value is not an array, then a get operation, likely an options.
+        if (!isArray(value)) {
+            options = value;
+            value = undefined;
+        }
+
+        var cache = (options && options.templates) || templateCache;
+        if (value !== undefined) {
+            cache[id] = value;
+        }
+
+        //Return the value. For get use, the template may not be in
+        //the local options.templates, but in the global cache, so
+        //be sure to check both.
+        return cache[id] || templateCache[id];
     };
 
     return jig;
