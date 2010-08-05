@@ -8,11 +8,14 @@
 'use strict';
 
 require.def('blade', function () {
+    var aps = Array.prototype.slice;
+
     /**
      * Adds a new method to the prototype of a function that allows chained
-     * calls.
+     * calls. This function is added to newly forged blade, not something
+     * that is called directly.
      *
-     * @param {Function} Ctor the constructor function whose prototype will
+     * @param {Function} maker the function whose prototype will
      * get the new method.
      *
      * @param {String} name of the function to attach the the prototype.
@@ -32,7 +35,7 @@ require.def('blade', function () {
      * @returns {Function} the constructor function passed in as the first argument,
      * to allow chaining of the extend calls.
      */
-    function extend(Ctor, name, func, allowChaining) {
+    function extend(maker, name, func, allowChaining) {
         //The function will receive the this.o (the subject object) as the first
         //argument to the call.
         var f;
@@ -40,60 +43,49 @@ require.def('blade', function () {
         if (allowChaining) {
             // chain on function
             f = function () {
-                var ret = func.apply(this, [this.o].concat(arguments));
-                if (allowChaining === true || allowChaining([ret].concat(arguments))) {
+                var ret = func.apply(this, [this.o].concat(aps.call(arguments)));
+                if (allowChaining === true || allowChaining([ret].concat(aps.call(arguments)))) {
                     //Want to avoid extra Ctor calls if the fundamental object
                     //has not changed, so only create a new one if ret !== undefined
                     if (ret !== undefined && ret !== this.o) {
-                        ret = Ctor(ret);
+                        ret = maker(ret);
                         ret._parent = this;
                         return ret;
                     } else {
                         return this;
                     }
-                }else {
+                } else {
                     return ret;
                 }
             };
         } else {
             // don't chain
             f = function () {
-                return func.apply(this, [this.o].concat(arguments));
+                return func.apply(this, [this.o].concat(aps.call(arguments)));
             };
         }
-        Ctor.prototype[name] = f;
+        maker.prototype[name] = f;
 
-        return Ctor;
+        return maker;
     }
 
     /**
      * Forges a new chainable function entry point. Enables the ability to create
      * chainable DSLs
+     *
+     * @param {Function} [convert] a function that converts the subject to some
+     * other value. Useful to normalize different types of input to a common
+     * type.
+     * 
      * @param {String} [extendName] optional string that defines the name of
      * the function that allows adding method extensions to this function. By
-     * default the name is 'extend'. Blade calls it 'sharpen'.
+     * default the name is 'extend'.
      *
      * @returns {Function} a constructor function that can be used in method chains. Follows
      * the blade model where new instances 
      */
-    function forge(extendName) {
-        /**
-         * The main entry point into a chainable DSL. It wraps the object passed
-         * as the subject argument in a proxy object that has methods
-         * attached to it.
-         * 
-         * @param {Object} subject the object to wrap in chainable methods.
-         */
-        var Ctor = function (subject, parent) {
-            //If this is an instance that already has a subject, return it.
-            if (this.constructor !== Ctor) {
-                return new Ctor(subject);
-            }
-
-            this.o = subject;
-
-            return this;
-        };
+    function forge(convert, extendName) {
+        function Ctor() {};
 
         Ctor.prototype = {
             /**
@@ -104,17 +96,36 @@ require.def('blade', function () {
             }
         };
 
-        //Attach the 
-        Ctor[extendName || 'extend'] = function () {
-            return extend.apply(null, [Ctor].concat(arguments));
+       /**
+         * The main entry point into a chainable DSL. It wraps the object passed
+         * as the subject argument in a proxy object that has methods
+         * attached to it.
+         * 
+         * @param {Object} subject the object to wrap in chainable methods.
+         */
+        function maker(subject) {
+            var instance = new Ctor();
+            instance.o = convert ? convert.apply(null, arguments) : subject;
+            return instance;
+        }
+
+        //Make sure the maker's prototype is the same as the Ctor,
+        //to allow people to extend it in the normal .prototype way.
+        //also allow for jQuery-type of 'fn' shortcut.
+        maker.fn = maker.prototype = Ctor.prototype;
+
+        //Attach the extension method to the maker
+        maker[extendName || 'extend'] = function () {
+            return extend.apply(null, [maker].concat(aps.call(arguments)));
         };
 
-        return Ctor;
+        return maker;
     }
 
     //Create the actual blade constructor.
-    var blade = forge('sharpen');
-    blade.forge = forge;
+    var blade = {
+        forge: forge
+    };
 
     return blade;
 });

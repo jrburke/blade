@@ -10,8 +10,7 @@
 
 require.def('blade/query', ['blade'], function (blade) {
 
-    var counter = 0, Ctor = Array;
-    // QSA-only for webkit mobile. Welcome to the future.
+    var counter = 0, Ctor = Array, maker;
     function query(qry, root) {
         if (!qry) {
             return new Ctor();
@@ -22,7 +21,7 @@ require.def('blade/query', ['blade'], function (blade) {
         }
 
         if (typeof qry !== 'string') { // inline'd type check
-            return new Ctor(qry); // dojo.NodeList
+            return new Ctor(qry);
         }
 
         if (typeof root === 'string') { // inline'd type check
@@ -52,15 +51,11 @@ require.def('blade/query', ['blade'], function (blade) {
         return Ctor.prototype.slice.call(doc.querySelectorAll(qry));
     }
 
-    //Add the query function for blade chaining.
-    require.modify(
-        'blade',
-        'blade-query',
-        ['blade'],
-        function (b) {
-            b.sharpen('query', query, false);
-        }
-    );
+    //Create the maker function for the query blade.
+    maker = blade.forge(query);
+    maker.extend('size', function () {
+        return this.o.length;
+    }, false);
 
-    return query;
+    return maker;
 });
