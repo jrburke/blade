@@ -7,6 +7,8 @@
     <script src="../doh/_browserRunner.js"></script>
     <script src="jig-tests.js"></script>
     <script>
+        /*jslint plusplus: false */
+        /*global require: false, doh: false, compareNormalizedText: false */
         'use strict';
 
         require({
@@ -75,6 +77,36 @@
                         runTest: function (t) {
                             return parsedDeferred;
                         }
+                    },
+
+                    function jigData() {
+                        //Test referencing a template via an ID, then using data
+                        //API to get/set data.
+                        var html = jig('#two', {
+                                type: 'fancy',
+                                name: 'Fancy Food'
+                            }, {
+                                attachData: true
+                            }),
+                            node = document.createElement('div'),
+                            data, fancyNode;
+
+                        node.innerHTML = html;
+                        node.firstChild.id = 'fancyTarget';
+                        document.getElementsByTagName('body')[0].appendChild(node);
+                        fancyNode = document.getElementById('fancyTarget');
+                        data = jig.data(fancyNode);
+
+                        doh.is('fancy', data.type);
+
+                        jig.data(fancyNode, {
+                            type: 'cheap',
+                            name: 'Cheap Food'
+                        });
+
+                        data = jig.data(fancyNode);
+
+                        doh.is('cheap', data.type);
                     }
                 ];
 

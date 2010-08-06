@@ -1,14 +1,14 @@
 <div>
     {args [}
-        {@ branch}
+        {# branch}
     {]}
 </div>
 
 {+ branch [}
     {isString(_) [}
-        {@ sub}
+        {# sub}
     {] isArray(_) [}
-        {@ subArray _}
+        {# subArray _}
     {] [}
         Some object with name: {name}
     {]}

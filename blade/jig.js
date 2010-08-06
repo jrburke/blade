@@ -25,7 +25,7 @@ require.def('blade/jig', ['blade/object'], function (object) {
         startToken = '{',
         endToken = '}',
         rawHtmlToken = '^',
-        templateRefToken = '@',
+        templateRefToken = '#',
         argSeparator = ' ',
         //First character in an action cannot be something that
         //could be the start of a regular JS property name,
@@ -289,7 +289,7 @@ require.def('blade/jig', ['blade/object'], function (object) {
                 return '';
             }
         },
-        '@': {
+        '#': {
             doc: 'Template reference',
             action: function (args, data, options, children, render) {
                 var compiled = jig.cache(args[0], options);
@@ -321,8 +321,27 @@ require.def('blade/jig', ['blade/object'], function (object) {
     };
 
     jig = function (text, data, options) {
+        var id, node;
         if (typeof text === 'string') {
-            text = jig.compile(text, options);
+            if (text.charAt(0) === '#') {
+                //a lookup by template ID
+                id = text.substring(1, text.length);
+                text = jig.cache(id, options);
+
+                //Did not find the text template. Maybe it is a DOM element.
+                if (text === undefined && typeof document !== 'undefined') {
+                    node = document.getElementById(id);
+                    if (node) {
+                        jig.parse([node], options);
+                    }
+                    text = jig.cache(id, options);
+                    if (text === undefined) {
+                        throw new Error('blade/jig: no template or node with ID: ' + id);
+                    }
+                }
+            } else {
+                text = jig.compile(text, options);
+            }
         }
         return jig.render(text, data, options);
     };
@@ -685,14 +704,25 @@ require.def('blade/jig', ['blade/object'], function (object) {
     };
 
     /**
-     * Gets the data bound to a particular rendered template.
-     * @param {String} dataId the data ID. It can be fetched from the
-     * data-blade-jig attribute on a rendered template.
+     * Gets and sets the data bound to a particular rendered template. Setting
+     * the data does not change the already rendered template.
+     * 
+     * @param {String||DOMNode} dataId the data ID, or a DOM node with a
+     * data-blade-jig attribute that was generated from a rendered template.
      * @returns {Object} the bound data. Can return undefined if there is
      * no data stored with that ID.
      */
-    jig.data = function (dataId) {
-        return dataRegistry[dataId];
+    jig.data = function (dataId, value) {
+        if (typeof dataId !== 'string') {
+            //Should be a DOM node if it is not already a string.
+            dataId = dataId.getAttribute('data-blade-jig');
+        }
+
+        if (value !== undefined) {
+            return dataRegistry[dataId] = value;
+        } else {
+            return dataRegistry[dataId];
+        }
     };
 
     /**
