@@ -4,11 +4,13 @@
  * see: http://github.com/jrburke/blade for details
  */
 /*jslint  nomen: false, plusplus: false */
-/*global require: false, document: false, console: false */
+/*global require: false, document: false, console: false, jQuery: false */
 
 'use strict';
 
-require.def('blade/jig', ['blade/object'], function (object) {
+require.def('blade/jig',
+        ['require', 'blade/object'],
+function (require,   object) {
 
     //Fix unit test: something is wrong with it, says it passes, but
     //with attachData change, the string is actually different now.
@@ -526,6 +528,56 @@ require.def('blade/jig', ['blade/object'], function (object) {
     };
 
     /**
+     * Converts a node to a compiled template, and will store it in the cache. If already
+     * in the cache, it will give back the cached value.
+     */
+    function nodeToCompiled(node, options) {
+        var text, compiled, clss,
+            id = node.id,
+            cache = options.templates || templateCache;
+
+        //If the nodes has already been cached, then just get the cached value.
+        if (cache[id]) {
+            return cache[id];
+        }
+
+        //Call listener to allow processing of the node before
+        //template complication happens.
+        if (options.onBeforeParse) {
+            options.onBeforeParse(node);
+        }
+
+        if (node.nodeName.toUpperCase() === 'SCRIPT') {
+            text = node.text.trim();
+            if (node.parentNode) {
+                node.parentNode.removeChild(node);
+            }
+        } else {
+            //Put node in temp node to get the innerHTML so node's element
+            //html is in the output.
+            tempNode.appendChild(node);
+
+            //Remove the id node and the template class, since this
+            //template text could be duplicated many times, and a
+            //template class is no longer useful.
+            node.removeAttribute('id');
+            clss = (node.getAttribute('class') || '').trim();
+            if (clss) {
+                node.setAttribute('class', clss.replace(templateClassRegExp, '$1$3'));
+            }
+
+            //Decode braces when may get URL encoded as part of hyperlinks
+            text = tempNode.innerHTML.replace(/%7B/g, '{').replace(/%7D/g, '}');
+
+            //Clear out the temp node for the next use.
+            tempNode.removeChild(node);
+        }
+        compiled = jig.compile(text, options);
+        jig.cache(id, compiled, options);
+        return compiled;
+    }
+
+    /**
      * Parses an HTML document for templates, compiles them, and stores them
      * in a cache of templates to use on the page. Only useful in browser environments.
      * Script tags with type="text/template" are parsed, as well as DOM elements
@@ -545,46 +597,10 @@ require.def('blade/jig', ['blade/object'], function (object) {
         options = options || {};
         nodes = nodes || document.querySelectorAll('.template, script[type="text/template"]');
 
-        var node, i, text, id, clss,
-            cache = options.templates || templateCache,
-            onBeforeParse = options.onBeforeParse;
+        var node, i;
 
         for (i = nodes.length - 1; i > -1 && (node = nodes[i]); i--) {
-            id = node.id;
-            if (!cache[id]) {
-                //Call listener to allow processing of the node before
-                //template complication happens.
-                if (onBeforeParse) {
-                    onBeforeParse(node);
-                }
-
-                if (node.nodeName.toUpperCase() === 'SCRIPT') {
-                    text = node.text.trim();
-                    if (node.parentNode) {
-                        node.parentNode.removeChild(node);
-                    }
-                } else {
-                    //Put node in temp node to get the innerHTML so node's element
-                    //html is in the output.
-                    tempNode.appendChild(node);
-
-                    //Remove the id node and the template class, since this
-                    //template text could be duplicated many times, and a
-                    //template class is no longer useful.
-                    node.removeAttribute('id');
-                    clss = (node.getAttribute('class') || '').trim();
-                    if (clss) {
-                        node.setAttribute('class', clss.replace(templateClassRegExp, '$1$3'));
-                    }
-
-                    //Decode braces when may get URL encoded as part of hyperlinks
-                    text = tempNode.innerHTML.replace(/%7B/g, '{').replace(/%7D/g, '}');
-
-                    //Clear out the temp node for the next use.
-                    tempNode.removeChild(node);
-                }
-                jig.cache(id, text, options);
-            }  
+            nodeToCompiled(node, options);
         }
     };
 
@@ -719,7 +735,7 @@ require.def('blade/jig', ['blade/object'], function (object) {
         }
 
         if (value !== undefined) {
-            return dataRegistry[dataId] = value;
+            return (dataRegistry[dataId] = value);
         } else {
             return dataRegistry[dataId];
         }
@@ -788,6 +804,38 @@ require.def('blade/jig', ['blade/object'], function (object) {
         //be sure to check both.
         return cache[id] || templateCache[id];
     };
+
+    function addToJQuery(jQuery) {
+        //Only handles queries where it is by a node ID, '#something'.
+        jQuery.fn.jig = function (data, options) {
+            //Convert this, which is a DOM node into a string of data
+            options = options || {};
+
+            var id = this.selector,
+                compiled;
+
+            if (id.charAt(0) !== '#') {
+                throw new Error('blade/jig: only ID selectors, like "#something" are allowed with jig()');
+            }
+            id = id.substring(1, id.length);
+
+            //See if the template is already compiled.
+            compiled = (options.templates || templateCache)[id];
+
+            if (!compiled) {
+                compiled = nodeToCompiled(this[0]);
+            }
+
+            return $(jig.render(compiled, data, options));
+        };
+    }
+
+    //Set up the plugin with a RequireJS-aware jQuery module but also
+    //if there is a global jQuery.
+    //require.modify('jquery', 'jquery-jig', ['jquery'], addToJQuery);
+    if (typeof jQuery !== 'undefined') {
+        addToJQuery(jQuery);
+    }
 
     return jig;
 });

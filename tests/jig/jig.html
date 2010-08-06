@@ -3,12 +3,13 @@
 <head>
     <title>blade/jig Test</title>
     <script src="../../require.js"></script>
+    <script src="../jquery-1.4.2.js"></script>
     <script src="../doh/runner.js"></script>
     <script src="../doh/_browserRunner.js"></script>
     <script src="jig-tests.js"></script>
     <script>
         /*jslint plusplus: false */
-        /*global require: false, doh: false, compareNormalizedText: false */
+        /*global require: false, jQuery: false, doh: false, compareNormalizedText: false */
         'use strict';
 
         require({
@@ -91,6 +92,7 @@
                             node = document.createElement('div'),
                             data, fancyNode;
 
+                        node.id = 'fancyContainer';
                         node.innerHTML = html;
                         node.firstChild.id = 'fancyTarget';
                         document.getElementsByTagName('body')[0].appendChild(node);
@@ -107,6 +109,16 @@
                         data = jig.data(fancyNode);
 
                         doh.is('cheap', data.type);
+                    },
+
+                    function jQueryIntegration() {
+                        //This test builds on fancy container.
+                        jQuery('#one').jig({
+                            type: 'deluxe',
+                            name: 'Deluxe'
+                        }).appendTo('#fancyContainer');
+
+                        doh.is('deluxe', jQuery('#fancyContainer .deluxe')[0].className);
                     }
                 ];
 
