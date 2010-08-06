@@ -19,7 +19,7 @@
                     "require": "../../require"
                 }
             },
-            ["require", "blade/jig", "blade/object", "text!dom-rendered.html", "text!dom-rendered2.html"],
+            ["require", "blade/jig", "blade/object", "text!dom-rendered.html", "text!dom-rendered2.html", "text!hidden-rendered.html"],
             function (require, jig, object) {
 
                 var parsedDeferred = new doh.Deferred(),
@@ -29,12 +29,13 @@
                         {type: "size", name: "small"},
                         {type: "color", name: "blue"}
                     ],
-                    ids = ['one', 'two', 'scriptTemplate', 'domTemplate'],
+                    ids = ['hiddenOne', 'one', 'two', 'scriptTemplate', 'domTemplate'],
                     renderedName = {
                         one: 'dom-rendered.html',
                         two: 'dom-rendered.html',
                         scriptTemplate: 'dom-rendered.html',
-                        domTemplate: 'dom-rendered2.html'
+                        domTemplate: 'dom-rendered2.html',
+                        hiddenOne: 'hidden-rendered.html'
                     },
                     i, tests;
 
@@ -44,13 +45,12 @@
                         timeout: 2000,
                         runTest: function (t) {
                             var d = new doh.Deferred(),
-                                rendered = jig(jig.cache(id), data);
+                                rendered = jig('#' + id, data);
                             compareNormalizedText(t, d, renderedName[id], rendered);
                             return d;
                         }
                     };
                 }
-    
 
                 //Trigger default parsing.
                 jig.parse();
@@ -95,7 +95,7 @@
                         node.id = 'fancyContainer';
                         node.innerHTML = html;
                         node.firstChild.id = 'fancyTarget';
-                        document.getElementsByTagName('body')[0].appendChild(node);
+                        document.getElementById('dataTestContainer').appendChild(node);
                         fancyNode = document.getElementById('fancyTarget');
                         data = jig.data(fancyNode);
 
@@ -153,5 +153,16 @@
     <div id="domTemplate" class="template {type}">
         <span>{name}</span>
     </div>
+
+    <div id="dataTestContainer"></div>
+
+    <script id="hiddenOne" type="text/something">
+        <h1>{type}</h1>
+        {#hiddenTwo}
+    </script>
+    <script id="hiddenTwo" type="text/something">
+        <h2>{name}</h2>
+    </script>
+
 </body>
 </html>

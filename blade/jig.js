@@ -228,6 +228,33 @@ function (require,   object) {
         return result;
     }
 
+    /**
+     * Gets a compiled template based on the template ID. Will look in the
+     * DOM for an element with that ID if a template is not found already in
+     * the compiled cache.
+     * @param {String} id the ID of the template/DOM node
+     * @param {Object} [options]
+     *
+     * @returns {Array} the compiled template.
+     */
+    function compiledById(id, options) {
+        options = options || {};
+        var compiled = jig.cache(id, options), node;
+
+        //Did not find the text template. Maybe it is a DOM element.
+        if (compiled === undefined && typeof document !== 'undefined') {
+            node = document.getElementById(id);
+            if (node) {
+                jig.parse([node], options);
+            }
+            compiled = jig.cache(id, options);
+        }
+        if (compiled === undefined) {
+            throw new Error('blade/jig: no template or node with ID: ' + id);
+        }
+        return compiled;
+    }
+
     commands = {
         '_default_': {
             doc: 'Property reference',
@@ -294,10 +321,7 @@ function (require,   object) {
         '#': {
             doc: 'Template reference',
             action: function (args, data, options, children, render) {
-                var compiled = jig.cache(args[0], options);
-                if (!compiled) {
-                    jig.error('blade/jig: no template with name: ' + args[0]);
-                }
+                var compiled = compiledById(args[0], options);
                 data = getObject(args.length > 1 ? args[1] : defaultArg, data, options);
                 return render(compiled, data, options);
             }
@@ -323,24 +347,12 @@ function (require,   object) {
     };
 
     jig = function (text, data, options) {
-        var id, node;
+        var id;
         if (typeof text === 'string') {
             if (text.charAt(0) === '#') {
                 //a lookup by template ID
                 id = text.substring(1, text.length);
-                text = jig.cache(id, options);
-
-                //Did not find the text template. Maybe it is a DOM element.
-                if (text === undefined && typeof document !== 'undefined') {
-                    node = document.getElementById(id);
-                    if (node) {
-                        jig.parse([node], options);
-                    }
-                    text = jig.cache(id, options);
-                    if (text === undefined) {
-                        throw new Error('blade/jig: no template or node with ID: ' + id);
-                    }
-                }
+                text = compiledById(id, options);
             } else {
                 text = jig.compile(text, options);
             }
@@ -730,7 +742,10 @@ function (require,   object) {
      */
     jig.data = function (dataId, value) {
         if (typeof dataId !== 'string') {
-            //Should be a DOM node if it is not already a string.
+            //Should be a DOM node or node list if it is not already a string.
+            if (!dataId.nodeType) {
+                dataId = dataId[0];
+            }
             dataId = dataId.getAttribute('data-blade-jig');
         }
 
@@ -826,7 +841,7 @@ function (require,   object) {
                 compiled = nodeToCompiled(this[0]);
             }
 
-            return $(jig.render(compiled, data, options));
+            return jQuery(jig.render(compiled, data, options));
         };
     }
 
