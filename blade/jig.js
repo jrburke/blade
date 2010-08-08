@@ -846,8 +846,11 @@ function (require,   object) {
     }
 
     //Set up the plugin with a RequireJS-aware jQuery module but also
-    //if there is a global jQuery.
-    //require.modify('jquery', 'jquery-jig', ['jquery'], addToJQuery);
+    //if there is a global jQuery. Not all require builds have require.modify
+    //so make sure it is there before calling it.
+    if (require.modify) {
+        require.modify('jquery', 'jquery-jig', ['jquery'], addToJQuery);
+    }
     if (typeof jQuery !== 'undefined') {
         addToJQuery(jQuery);
     }

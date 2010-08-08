@@ -4,7 +4,7 @@
  * see: http://github.com/jrburke/requirejs for details
  */
 //laxbreak is true to allow build pragmas to change some statements.
-/*jslint plusplus: false, laxbreak: true */
+/*jslint plusplus: false, nomen: false, laxbreak: true */
 /*global window: false, document: false, navigator: false,
 setTimeout: false, traceDeps: true, clearInterval: false, self: false,
 setInterval: false, importScripts: false */
@@ -13,7 +13,7 @@ setInterval: false, importScripts: false */
 var require;
 (function () {
     //Change this version number for each release.
-    var version = "0.12.0",
+    var version = "0.12.0+",
             empty = {}, s,
             i, defContextName = "_", contextLoads = [],
             scripts, script, rePkg, src, m, cfg, setReadyState,
@@ -109,7 +109,7 @@ var require;
     require.def = function (name, deps, callback, contextName) {
         var config = null, context, newContext, contextRequire, loaded,
             canSetContext, prop, newLength, outDeps,
-            mods, pluginPrefix, paths, index, i;
+            mods, pluginPrefix, paths, index, i, deferMods;
 
         //Normalize the arguments.
         if (typeof name === "string") {
@@ -319,6 +319,13 @@ var require;
             mods = context.modifiers[name];
             if (mods) {
                 req(mods, contextName);
+                deferMods = mods.__deferMods;
+                if (deferMods) {
+                    contextRequire = context.defined.require;
+                    for (i = 0; i < deferMods.length; i++) {
+                        contextRequire.def.apply(contextRequire, deferMods[i]);
+                    }
+                }
             }
                     }
 
@@ -531,6 +538,9 @@ var require;
                 if (!context.specified[dep.fullName]) {
                     context.specified[dep.fullName] = true;
 
+                    //Reset the start time to use for timeouts
+                    context.startTime = (new Date()).getTime();
+
                     //If a plugin, call its load method.
                     if (dep.prefix) {
                                                 callPlugin(dep.prefix, context, {
@@ -585,15 +595,22 @@ var require;
                 list[name] = true;
             }
 
-            //Trigger the normal module definition logic.
-            require.def(name, deps, callback, contextName);
+            //Trigger the normal module definition logic if the target
+            //is already in the system.
+            if (context.specified[target]) {
+                require.def(name, deps, callback, contextName);
+            } else {
+                //Hold on to the execution/dependency checks for the modifier
+                //until the target is fetched.
+                (list.__deferMods || (list.__deferMods = [])).push([name, deps, callback, contextName]);
+            }
         } else {
             //A list of modifiers. Save them for future reference.
             for (prop in target) {
                 if (!(prop in empty)) {
                     //Store the modifier for future use.
                     modifier = target[prop];
-                    list = context.modifiers[prop] || (context.modifiers[prop] = []);
+                    list = mods[prop] || (context.modifiers[prop] = []);
                     if (!list[modifier]) {
                         list.push(modifier);
                         list[modifier] = true;
@@ -672,7 +689,6 @@ var require;
                 require.attach(url, contextName, moduleName);
                 urlFetched[url] = true;
             }
-            context.startTime = (new Date()).getTime();
                 }
             };
 
@@ -870,6 +886,7 @@ var require;
             err = new Error("require.js load timeout for modules: " + noLoads);
             err.requireType = "timeout";
             err.requireModules = noLoads;
+            throw err;
         }
         if (stillLoading) {
             //Something is still waiting to load. Wait for it.
